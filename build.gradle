@@ -14,5 +14,6 @@ allprojects {
         google()
         mavenCentral()
         maven { url 'https://maven.tapsell.ir/repository/maven-releases/' }
+        maven { url 'https://jitpack.io' }
     }
 }
