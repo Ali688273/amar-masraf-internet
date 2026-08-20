@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آمار مصرف اینترنت</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Tahoma, Arial, sans-serif;
+        }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px 80px 15px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+        .header h1 {
+            font-size: 1.4rem;
+            color: #38bdf8;
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        .card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            margin-bottom: 15px;
+            border: 1px solid #334155;
+        }
+        .card-title {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .usage-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #f1f5f9;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .usage-value span {
+            font-size: 1rem;
+            color: #38bdf8;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #334155;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 65%;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            border-radius: 5px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .stat-box {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+        .stat-box h3 {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+        .stat-box p {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #38bdf8;
+        }
+        .btn {
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: white;
+            border: none;
+            width: 100%;
+            max-width: 400px;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-top: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .btn:active {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>آمار مصرف اینترنت</h1>
+        <p>مدیریت و پایش هوشمند ترافیک مصرفی</p>
+    </div>
+
+    <div class="card">
+        <div class="card-title">
+            <span>مصرف امروز</span>
+            <span>ویژه</span>
+        </div>
+        <div class="usage-value" id="todayUsage">۱.۴۵ <span>گیگابایت</span></div>
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-box">
+            <h3>مصرف این ماه</h3>
+            <p id="monthUsage">۲۴.۸ گیگ</p>
+        </div>
+        <div class="stat-box">
+            <h3>سرعت لحظه‌ای</h3>
+            <p id="speed">۱۲.۴ Mb/s</p>
+        </div>
+    </div>
+
+    <button class="btn" onclick="updateStats()">بروزرسانی آمار مصرف</button>
+
+    <script>
+        function updateStats() {
+            const randomUsage = (Math.random() * (2.5 - 1.0) + 1.0).toFixed(2);
+            const randomSpeed = (Math.random() * (20.0 - 5.0) + 5.0).toFixed(1);
+            
+            document.getElementById('todayUsage').innerHTML = randomUsage + ' <span>گیگابایت</span>';
+            document.getElementById('speed').innerText = randomSpeed + ' Mb/s';
+        }
+    </script>
+</body>
+</html>
