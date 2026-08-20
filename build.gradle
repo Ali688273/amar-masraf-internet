@@ -8,12 +8,3 @@ buildscript {
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10'
     }
 }
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url 'https://maven.tapsell.ir/repository/maven-releases/' }
-        maven { url 'https://jitpack.io' }
-    }
-}
