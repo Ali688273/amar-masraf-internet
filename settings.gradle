@@ -10,7 +10,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }
+        maven { url 'http://maven.tapsell.ir/repository/maven-releases/'; allowInsecureProtocol = true }
+        maven { url 'https://repo.tapsell.ir/repository/maven-releases/' }
     }
 }
 rootProject.name = "AmarMasrafInternet"
