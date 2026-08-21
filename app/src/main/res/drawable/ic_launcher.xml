@@ -1,0 +1,88 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="512dp"
+    android:height="512dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- پس‌زمینه با گریدینت سرمه‌ای/بنفش جذاب -->
+    <path android:pathData="M80,0 L432,0 A80,80 0,0 1 512,80 L512,432 A80,80 0,0 1 432,512 L80,512 A80,80 0,0 1 0,432 L0,80 A80,80 0,0 1 80,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="512"
+                android:endY="512"
+                android:type="linear">
+                <item android:color="#FF0F0C20" android:offset="0.0" />
+                <item android:color="#FF1A0B2E" android:offset="0.5" />
+                <item android:color="#FF02203C" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- امواج وای‌فای (آبی/فیروزه‌ای) -->
+    <path
+        android:pathData="M 330,120 A 130,130 0 0,1 460,250"
+        android:strokeWidth="22"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:startX="330" android:startY="120" android:endX="460" android:endY="250" android:type="linear">
+                <item android:color="#FF8054FF" android:offset="0.0" />
+                <item android:color="#FF00D2FF" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <path
+        android:pathData="M 350,165 A 85,85 0 0,1 435,250"
+        android:strokeWidth="22"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:startX="350" android:startY="165" android:endX="435" android:endY="250" android:type="linear">
+                <item android:color="#FF8054FF" android:offset="0.0" />
+                <item android:color="#FF00D2FF" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <path
+        android:pathData="M 370,210 A 40,40 0 0,1 410,250"
+        android:strokeWidth="22"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:startX="370" android:startY="210" android:endX="410" android:endY="250" android:type="linear">
+                <item android:color="#FF8054FF" android:offset="0.0" />
+                <item android:color="#FF00D2FF" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- فلش نمودار رشد (بنفش و سفید) -->
+    <path
+        android:pathData="M 90,370 L 190,270 L 250,330 L 370,190"
+        android:strokeWidth="28"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:startX="90" android:startY="370" android:endX="370" android:endY="190" android:type="linear">
+                <item android:color="#FA8B5CF6" android:offset="0.0" />
+                <item android:color="#FFFFFFFF" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- نوک فلش -->
+    <path
+        android:pathData="M 310,190 L 375,185 L 370,250"
+        android:strokeWidth="28"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:startX="310" android:startY="190" android:endX="375" android:endY="250" android:type="linear">
+                <item android:color="#FFFFFFFF" android:offset="0.0" />
+                <item android:color="#FFFFFFFF" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>
