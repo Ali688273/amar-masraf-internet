@@ -283,7 +283,6 @@ class MainActivity : AppCompatActivity() {
             speedLayout.addView(speedTitle)
             speedLayout.addView(speedDetailsLayout)
             speedCard.addView(speedLayout)
-            speedCard.addView(speedLayout)
             mainLayout.addView(speedCard)
 
             // ۵. تفکیک برنامه‌ها
@@ -545,4 +544,5 @@ class MainActivity : AppCompatActivity() {
         private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#6366F1")
             style = Paint.Style.STROKE
-            st
+            strokeWidth = 26f
+            strokeCap = Pai
