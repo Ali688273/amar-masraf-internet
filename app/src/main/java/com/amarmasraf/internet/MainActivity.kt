@@ -61,7 +61,6 @@ class MainActivity : AppCompatActivity() {
             setPadding(30, 40, 30, 40)
         }
 
-        // ۱. هدر بالای صفحه
         val headerLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -119,7 +118,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             val statsManager = getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
 
-            // ۲. تب‌های انتخاب شبکه
             val tabsLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 setPadding(0, 10, 0, 25)
@@ -134,7 +132,6 @@ class MainActivity : AppCompatActivity() {
             tabsLayout.addView(wifiCard)
             mainLayout.addView(tabsLayout)
 
-            // ۳. کارت اصلی نمودار دایره‌ای مصرف
             val monthlyBytes = getTotalUsageForPeriod(statsManager, Calendar.MONTH)
             val monthlyGB = monthlyBytes / (1024.0 * 1024.0 * 1024.0)
 
@@ -201,7 +198,6 @@ class MainActivity : AppCompatActivity() {
             chartCard.addView(chartLayout)
             mainLayout.addView(chartCard)
 
-            // ۴. کارت آمار سرعت زنده ترافیک
             val speedCard = CardView(this).apply {
                 radius = 24f
                 setCardBackgroundColor(cardBgColor)
@@ -285,7 +281,6 @@ class MainActivity : AppCompatActivity() {
             speedCard.addView(speedLayout)
             mainLayout.addView(speedCard)
 
-            // ۵. تفکیک برنامه‌ها
             val appListTitle = TextView(this).apply {
                 text = "📱 آمار مصرف به تفکیک برنامه‌ها"
                 textSize = 16f
@@ -545,4 +540,36 @@ class MainActivity : AppCompatActivity() {
             color = Color.parseColor("#6366F1")
             style = Paint.Style.STROKE
             strokeWidth = 26f
-            strokeCap = Pai
+            strokeCap = Paint.Cap.ROUND
+        }
+
+        private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textSize = 55f
+            typeface = Typeface.DEFAULT_BOLD
+            textAlign = Paint.Align.CENTER
+        }
+
+        private val subTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#94A3B8")
+            textSize = 28f
+            textAlign = Paint.Align.CENTER
+        }
+
+        override fun onDraw(canvas: Canvas) {
+            super.onDraw(canvas)
+            val w = width.toFloat()
+            val h = height.toFloat()
+            val radius = (Math.min(w, h) / 2) - 30f
+            val rect = RectF(w / 2 - radius, h / 2 - radius, w / 2 + radius, h / 2 + radius)
+
+            canvas.drawArc(rect, 135f, 270f, false, bgPaint)
+            
+            val sweep = Math.min((gbValue / 20.0) * 270f, 270.0).toFloat()
+            canvas.drawArc(rect, 135f, if (sweep < 10f) 20f else sweep, false, progressPaint)
+
+            canvas.drawText(String.format("%.1f", gbValue), w / 2, h / 2 + 10f, textPaint)
+            canvas.drawText("گیگابایت (GB)", w / 2, h / 2 + 55f, subTextPaint)
+        }
+    }
+}
