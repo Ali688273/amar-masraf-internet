@@ -6,13 +6,13 @@ pluginManagement {
     }
 }
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
-        maven { url 'http://maven.tapsell.ir/repository/maven-releases/'; allowInsecureProtocol = true }
-        maven { url 'https://repo.tapsell.ir/repository/maven-releases/' }
+        maven { url 'https://storage.backtory.com/tapsell-server/sdk/android' }
     }
 }
-rootProject.name = "AmarMasrafInternet"
+
+rootProject.name = "MyInternetApp"
 include ':app'
