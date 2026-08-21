@@ -1,5 +1,6 @@
 package com.amarmasraf.internet
 
+import android.annotation.SuppressLint
 import android.app.AppOpsManager
 import android.app.usage.NetworkStats
 import android.app.usage.NetworkStatsManager
@@ -20,6 +21,7 @@ import android.os.Looper
 import android.os.Process
 import android.provider.Settings
 import android.telephony.SubscriptionManager
+import android.telephony.TelephonyManager
 import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
@@ -44,7 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var speedDownloadTv: TextView
     private lateinit var speedUploadTv: TextView
     private lateinit var dynamicContainer: LinearLayout
-    
+
     private var selectedNetwork = NetworkType.SIM1
     private var selectedPeriod = TimePeriod.TODAY
 
@@ -67,7 +69,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(30, 40, 30, 40)
         }
 
-        // ۱. هدر
+        // ۱. هدر اصلی
         val headerLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -87,7 +89,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val subtitleTv = TextView(this).apply {
-            text = "پایش دقیق و تفکیکی ترافیک شبکه"
+            text = "پایش دقیق، مقایسه دوره‌ای و تحلیل هوشمند"
             textSize = 12f
             setTextColor(Color.parseColor("#94A3B8"))
             setPadding(0, 4, 0, 0)
@@ -123,10 +125,8 @@ class MainActivity : AppCompatActivity() {
             }
             mainLayout.addView(permNotice)
         } else {
-            // کارت سرعت زنده
             mainLayout.addView(createSpeedCard())
 
-            // کانتینر محتوای پویا
             dynamicContainer = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
             }
@@ -151,7 +151,7 @@ class MainActivity : AppCompatActivity() {
         val cardBgColor = Color.parseColor("#1E293B")
         val statsManager = getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
 
-        // انتخاب نوع شبکه (سیم ۱ / سیم ۲ / وای فای)
+        // انتخاب شبکه
         val networkTabs = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, 10, 0, 15)
@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity() {
         })
         dynamicContainer.addView(networkTabs)
 
-        // انتخاب بازه زمانی (امروز / این هفته / این ماه)
+        // انتخاب بازه
         val periodTabs = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, 0, 0, 25)
@@ -191,26 +191,24 @@ class MainActivity : AppCompatActivity() {
         })
         dynamicContainer.addView(periodTabs)
 
-        // محاسبه مصرف
         val (startTime, endTime) = getTimeRange(selectedPeriod)
         val netTypeInt = if (selectedNetwork == NetworkType.WIFI) ConnectivityManager.TYPE_WIFI else ConnectivityManager.TYPE_MOBILE
         val subscriberId = getSubscriberIdForNetwork(selectedNetwork)
 
         val totalBytes = getNetworkBytes(statsManager, netTypeInt, subscriberId, startTime, endTime)
-        val totalGB = totalBytes / (1024.0 * 1024.0 * 1024.0)
 
-        // نمودار مصرف
+        // ۱. کارت اصلی نمودار
         val chartCard = CardView(this).apply {
             radius = 28f
             setCardBackgroundColor(cardBgColor)
             val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            params.setMargins(0, 0, 0, 30)
+            params.setMargins(0, 0, 0, 25)
             layoutParams = params
         }
 
         val chartLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(35, 35, 35, 35)
+            setPadding(30, 30, 30, 30)
             gravity = Gravity.CENTER_HORIZONTAL
         }
 
@@ -233,9 +231,9 @@ class MainActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         }
 
-        val circleView = CircularProgressView(this, totalGB)
-        circleView.layoutParams = LinearLayout.LayoutParams(380, 380).apply {
-            setMargins(0, 20, 0, 20)
+        val circleView = CircularProgressView(this, formatBytes(totalBytes))
+        circleView.layoutParams = LinearLayout.LayoutParams(360, 360).apply {
+            setMargins(0, 15, 0, 15)
         }
 
         chartLayout.addView(chartTitle)
@@ -243,13 +241,21 @@ class MainActivity : AppCompatActivity() {
         chartCard.addView(chartLayout)
         dynamicContainer.addView(chartCard)
 
-        // لیست برنامه‌ها
+        // ۲. کارت جدول مقایسه‌ای دوره فعلی و دوره قبل
+        dynamicContainer.addView(createComparisonCard(statsManager, netTypeInt, subscriberId))
+
+        // ۳. کارت پیش‌بینی هوشمند مصرف
+        if (selectedPeriod == TimePeriod.MONTH) {
+            dynamicContainer.addView(createPredictionCard(totalBytes))
+        }
+
+        // ۴. آمار تفکیکی برنامه‌ها
         val appListTitle = TextView(this).apply {
             text = "📱 مصرف برنامه‌ها در این بازه"
             textSize = 15f
             setTextColor(Color.WHITE)
             typeface = Typeface.DEFAULT_BOLD
-            setPadding(10, 10, 10, 20)
+            setPadding(10, 15, 10, 15)
         }
         dynamicContainer.addView(appListTitle)
 
@@ -259,7 +265,7 @@ class MainActivity : AppCompatActivity() {
                 text = "هیچ مصرفی برای این بازه ثبت نشده است."
                 setTextColor(Color.parseColor("#64748B"))
                 gravity = Gravity.CENTER
-                setPadding(0, 30, 0, 30)
+                setPadding(0, 20, 0, 20)
             }
             dynamicContainer.addView(emptyTv)
         } else {
@@ -267,6 +273,140 @@ class MainActivity : AppCompatActivity() {
                 dynamicContainer.addView(createAppRow(app, cardBgColor))
             }
         }
+    }
+
+    // جدول مقایسه‌ای هوشمند (امروز با دیروز / این هفته با هفته قبل)
+    private fun createComparisonCard(statsManager: NetworkStatsManager, networkType: Int, subscriberId: String?): CardView {
+        val card = CardView(this).apply {
+            radius = 24f
+            setCardBackgroundColor(Color.parseColor("#1E293B"))
+            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            params.setMargins(0, 0, 0, 25)
+            layoutParams = params
+        }
+
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(25, 25, 25, 25)
+        }
+
+        val (currStart, currEnd) = getTimeRange(selectedPeriod)
+        val (prevStart, prevEnd) = getPreviousTimeRange(selectedPeriod)
+
+        val currentUsage = getNetworkBytes(statsManager, networkType, subscriberId, currStart, currEnd)
+        val previousUsage = getNetworkBytes(statsManager, networkType, subscriberId, prevStart, prevEnd)
+
+        val diff = currentUsage - previousUsage
+        val isIncreased = diff > 0
+        val percentage = if (previousUsage > 0) Math.abs((diff.toDouble() / previousUsage.toDouble()) * 100) else 0.0
+
+        val periodLabel = when(selectedPeriod) {
+            TimePeriod.TODAY -> "امروز"
+            TimePeriod.WEEK -> "این هفته"
+            TimePeriod.MONTH -> "این ماه"
+        }
+        val prevLabel = when(selectedPeriod) {
+            TimePeriod.TODAY -> "دیروز"
+            TimePeriod.WEEK -> "هفته قبل"
+            TimePeriod.MONTH -> "ماه قبل"
+        }
+
+        val title = TextView(this).apply {
+            text = "🔄 جدول مقایسه مصرف ($periodLabel با $prevLabel)"
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(0, 0, 0, 15)
+        }
+        layout.addView(title)
+
+        // ردیف جدول
+        val tableLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setBackgroundColor(Color.parseColor("#0F172A"))
+            setPadding(20, 20, 20, 20)
+        }
+
+        val currBox = createCompareBox(periodLabel, formatBytes(currentUsage), "#3B82F6")
+        val prevBox = createCompareBox(prevLabel, formatBytes(previousUsage), "#94A3B8")
+
+        val statusColor = if (isIncreased) "#EF4444" else "#10B981"
+        val statusSymbol = if (isIncreased) "▲ +" else "▼ -"
+        val statusText = if (previousUsage > 0) String.format("%s%.1f٪", statusSymbol, percentage) else "جدید"
+        val diffBox = createCompareBox("تغییرات", statusText, statusColor)
+
+        tableLayout.addView(currBox)
+        tableLayout.addView(prevBox)
+        tableLayout.addView(diffBox)
+
+        layout.addView(tableLayout)
+        card.addView(layout)
+        return card
+    }
+
+    private fun createCompareBox(title: String, value: String, colorHex: String): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+
+            val tTv = TextView(context).apply {
+                text = title
+                textSize = 11f
+                setTextColor(Color.parseColor("#94A3B8"))
+                gravity = Gravity.CENTER
+            }
+            val vTv = TextView(context).apply {
+                text = value
+                textSize = 12f
+                setTextColor(Color.parseColor(colorHex))
+                typeface = Typeface.DEFAULT_BOLD
+                gravity = Gravity.CENTER
+                setPadding(0, 6, 0, 0)
+            }
+            addView(tTv)
+            addView(vTv)
+        }
+    }
+
+    private fun createPredictionCard(currentMonthBytes: Long): CardView {
+        val card = CardView(this).apply {
+            radius = 24f
+            setCardBackgroundColor(Color.parseColor("#1E293B"))
+            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            params.setMargins(0, 0, 0, 25)
+            layoutParams = params
+        }
+
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(25, 25, 25, 25)
+        }
+
+        val calendar = Calendar.getInstance()
+        val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
+        val maxDays = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+
+        val predictedBytes = if (currentDay > 0) (currentMonthBytes / currentDay) * maxDays else 0L
+
+        val title = TextView(this).apply {
+            text = "🔮 پیش‌بینی هوشمند تا پایان ماه"
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(0, 0, 0, 10)
+        }
+
+        val desc = TextView(this).apply {
+            text = "با توجه به الگوی مصرف $currentDay روز گذشته، پیش‌بینی می‌شود مصرف این ماه شما به ${formatBytes(predictedBytes)} برسد."
+            textSize = 12f
+            setTextColor(Color.parseColor("#CBD5E1"))
+        }
+
+        layout.addView(title)
+        layout.addView(desc)
+        card.addView(layout)
+        return card
     }
 
     private fun createTabCard(title: String, isSelected: Boolean, onClick: () -> Unit): CardView {
@@ -431,16 +571,49 @@ class MainActivity : AppCompatActivity() {
         return Pair(calendar.timeInMillis, endTime)
     }
 
+    private fun getPreviousTimeRange(period: TimePeriod): Pair<Long, Long> {
+        val calendar = Calendar.getInstance()
+        when (period) {
+            TimePeriod.TODAY -> {
+                calendar.add(Calendar.DAY_OF_YEAR, -1)
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                val start = calendar.timeInMillis
+                calendar.set(Calendar.HOUR_OF_DAY, 23)
+                calendar.set(Calendar.MINUTE, 59)
+                calendar.set(Calendar.SECOND, 59)
+                return Pair(start, calendar.timeInMillis)
+            }
+            TimePeriod.WEEK -> {
+                val end = calendar.timeInMillis - (7 * 24 * 60 * 60 * 1000L)
+                val start = end - (7 * 24 * 60 * 60 * 1000L)
+                return Pair(start, end)
+            }
+            TimePeriod.MONTH -> {
+                val end = calendar.timeInMillis - (30 * 24 * 60 * 60 * 1000L)
+                val start = end - (30 * 24 * 60 * 60 * 1000L)
+                return Pair(start, end)
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission", "HardwareIds")
     private fun getSubscriberIdForNetwork(network: NetworkType): String? {
         if (network == NetworkType.WIFI) return null
         return try {
             val sm = getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
             val list = sm.activeSubscriptionInfoList
-            if (list != null) {
-                val index = if (network == NetworkType.SIM1) 0 else 1
-                if (list.size > index) {
-                    list[index].subscriptionId.toString()
-                } else null
+            val slotIndex = if (network == NetworkType.SIM1) 0 else 1
+
+            if (list != null && list.size > slotIndex) {
+                val subInfo = list[slotIndex]
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val tm = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+                    tm.createForSubscriptionId(subInfo.subscriptionId).subscriberId
+                } else {
+                    subInfo.subscriptionId.toString()
+                }
             } else null
         } catch (e: Exception) {
             null
@@ -474,7 +647,7 @@ class MainActivity : AppCompatActivity() {
                 stats.getNextBucket(bucket)
                 val uid = bucket.uid
                 val bytes = bucket.rxBytes + bucket.txBytes
-                if (bytes < 100 * 1024) continue // نادیده گرفتن مصرف زیر ۱۰۰ کیلوبایت
+                if (bytes < 10 * 1024) continue
 
                 val packages = pm.getPackagesForUid(uid)
                 if (packages != null && packages.isNotEmpty()) {
@@ -542,15 +715,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun formatBytes(bytes: Long): String {
-        val mb = bytes / (1024 * 1024)
-        return if (mb >= 1024) {
-            String.format("%.2f گیگابایت", mb / 1024.0)
-        } else {
-            "$mb مگابایت"
+        val kb = bytes / 1024.0
+        val mb = kb / 1024.0
+        val gb = mb / 1024.0
+
+        return when {
+            gb >= 1.0 -> String.format("%.2f گیگابایت", gb)
+            mb >= 1.0 -> String.format("%.0f مگابایت", mb)
+            kb >= 1.0 -> String.format("%.0f کیلوبایت", kb)
+            else -> "$bytes بایت"
         }
     }
 
-    class CircularProgressView(context: Context, private val gbValue: Double) : View(context) {
+    class CircularProgressView(context: Context, private val formattedText: String) : View(context) {
         private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#334155")
             style = Paint.Style.STROKE
@@ -566,14 +743,8 @@ class MainActivity : AppCompatActivity() {
 
         private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
-            textSize = 50f
+            textSize = 36f
             typeface = Typeface.DEFAULT_BOLD
-            textAlign = Paint.Align.CENTER
-        }
-
-        private val subTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#94A3B8")
-            textSize = 24f
             textAlign = Paint.Align.CENTER
         }
 
@@ -585,11 +756,9 @@ class MainActivity : AppCompatActivity() {
             val rect = RectF(w / 2 - radius, h / 2 - radius, w / 2 + radius, h / 2 + radius)
 
             canvas.drawArc(rect, 135f, 270f, false, bgPaint)
-            val sweep = Math.min((gbValue / 10.0) * 270f, 270.0).toFloat()
-            canvas.drawArc(rect, 135f, if (sweep < 5f && gbValue > 0) 10f else sweep, false, progressPaint)
+            canvas.drawArc(rect, 135f, 200f, false, progressPaint)
 
-            canvas.drawText(if (gbValue < 0.1) String.format("%.2f", gbValue) else String.format("%.1f", gbValue), w / 2, h / 2 + 8f, textPaint)
-            canvas.drawText("گیگابایت", w / 2, h / 2 + 48f, subTextPaint)
+            canvas.drawText(formattedText, w / 2, h / 2 + 12f, textPaint)
         }
     }
 }
