@@ -10,7 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://maven.tapsell.ir/plus' }
+        maven { url 'https://jitpack.io' }
     }
 }
 
