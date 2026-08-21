@@ -36,6 +36,6 @@ dependencies {
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.cardview:cardview:1.0.0'
     
-    // کتابخانه تپسل
-    implementation 'ir.tapsell.plus:tapsell-plus-sdk:2.2.0'
+    // نام استاندارد و بروز پکیج تپسل در Maven Central
+    implementation 'ir.tapsell.plus:tapsell-plus-sdk-android:2.2.9'
 }
