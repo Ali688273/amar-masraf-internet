@@ -27,13 +27,6 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
-import ir.tapsell.plus.TapsellPlus
-import ir.tapsell.plus.TapsellPlusInitListener
-import ir.tapsell.plus.model.AdNetworkError
-import ir.tapsell.plus.model.AdNetworks
-import ir.tapsell.plus.model.TapsellPlusAdModel
-import ir.tapsell.plus.model.TapsellPlusBannerType
-import ir.tapsell.plus.listener.AdRequestCallback
 import java.util.Calendar
 
 data class AppUsageInfo(
@@ -290,6 +283,7 @@ class MainActivity : AppCompatActivity() {
             speedLayout.addView(speedTitle)
             speedLayout.addView(speedDetailsLayout)
             speedCard.addView(speedLayout)
+            speedCard.addView(speedLayout)
             mainLayout.addView(speedCard)
 
             // ۵. تفکیک برنامه‌ها
@@ -315,25 +309,10 @@ class MainActivity : AppCompatActivity() {
             addView(mainLayout)
         }
 
-        // ۶. جایگاه نمایش بنر تبلیغاتی تپسل
-        val adContainer = LinearLayout(this).apply {
-            id = View.generateViewId()
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setBackgroundColor(Color.parseColor("#1E293B"))
-            setPadding(10, 15, 10, 15)
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        }
-
         rootLayout.addView(scrollView)
-        rootLayout.addView(adContainer)
         setContentView(rootLayout)
 
         startSpeedMonitor()
-        initAndShowTapsellAd(adContainer.id)
     }
 
     private fun createTabCard(title: String, subtitle: String, isSelected: Boolean): CardView {
@@ -542,4 +521,28 @@ class MainActivity : AppCompatActivity() {
         val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             appOps.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName)
         } else {
-    
+            appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName)
+        }
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    private fun formatBytes(bytes: Long): String {
+        val mb = bytes / (1024 * 1024)
+        return if (mb >= 1024) {
+            String.format("%.2f گیگابایت", mb / 1024.0)
+        } else {
+            "$mb مگابایت"
+        }
+    }
+
+    class CircularProgressView(context: Context, private val gbValue: Double) : View(context) {
+        private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#334155")
+            style = Paint.Style.STROKE
+            strokeWidth = 24f
+        }
+
+        private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#6366F1")
+            style = Paint.Style.STROKE
+            st
