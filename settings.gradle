@@ -10,7 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://storage.backtory.com/tapsell-server/sdk/android' }
+        maven { url 'https://maven.tapsell.ir/plus' }
     }
 }
 
