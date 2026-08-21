@@ -29,8 +29,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import ir.tapsell.plus.TapsellPlus
 import ir.tapsell.plus.TapsellPlusInitListener
-import ir.tapsell.plus.TapsellPlusBannerType
-import ir.tapsell.plus.AdRequestCallback
+import ir.tapsell.plus.model.AdNetworkError
+import ir.tapsell.plus.model.AdNetworks
+import ir.tapsell.plus.model.TapsellPlusAdModel
+import ir.tapsell.plus.model.TapsellPlusBannerType
+import ir.tapsell.plus.listener.AdRequestCallback
 import java.util.Calendar
 
 data class AppUsageInfo(
@@ -538,91 +541,4 @@ class MainActivity : AppCompatActivity() {
         val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             appOps.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName)
-        } else {
-            appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName)
-        }
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
-
-    // راه اندازی تپسل و نمایش بنر مطابق با SDK نسخه جدید
-    private fun initAndShowTapsellAd(adContainerId: Int) {
-        val tapsellKey = "aanbcpksderreqsnknjnookaelpsgibjbrjbcfsicndoqmkimibmncsnfqrrbkccaiqnjb"
-        val zoneId = "6a868ecdaf056d371d5ba541"
-
-        TapsellPlus.initialize(this, tapsellKey, object : TapsellPlusInitListener {
-            override fun onInitializeSuccess(adNetworks: Any?) {
-                TapsellPlus.requestStandardBannerAd(
-                    this@MainActivity,
-                    zoneId,
-                    TapsellPlusBannerType.BANNER_320x50,
-                    object : AdRequestCallback() {
-                        override fun response(responseId: String?) {
-                            if (responseId != null) {
-                                TapsellPlus.showStandardBannerAd(
-                                    this@MainActivity,
-                                    responseId,
-                                    findViewById(adContainerId)
-                                )
-                            }
-                        }
-                        override fun error(message: String?) {}
-                    }
-                )
-            }
-            override fun onInitializeFailed(error: String?) {}
-        })
-    }
-
-    private fun formatBytes(bytes: Long): String {
-        val mb = bytes / (1024 * 1024)
-        return if (mb >= 1024) {
-            String.format("%.2f گیگابایت", mb / 1024.0)
-        } else {
-            "$mb مگابایت"
-        }
-    }
-
-    class CircularProgressView(context: Context, private val gbValue: Double) : View(context) {
-        private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#334155")
-            style = Paint.Style.STROKE
-            strokeWidth = 24f
-        }
-
-        private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#6366F1")
-            style = Paint.Style.STROKE
-            strokeWidth = 26f
-            strokeCap = Paint.Cap.ROUND
-        }
-
-        private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE
-            textSize = 55f
-            typeface = Typeface.DEFAULT_BOLD
-            textAlign = Paint.Align.CENTER
-        }
-
-        private val subTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#94A3B8")
-            textSize = 28f
-            textAlign = Paint.Align.CENTER
-        }
-
-        override fun onDraw(canvas: Canvas) {
-            super.onDraw(canvas)
-            val width = width.toFloat()
-            val height = height.toFloat()
-            val radius = (Math.min(width, height) / 2) - 30f
-            val rect = RectF(width / 2 - radius, height / 2 - radius, width / 2 + radius, height / 2 + radius)
-
-            canvas.drawArc(rect, 135f, 270f, false, bgPaint)
-            
-            val sweep = Math.min((gbValue / 20.0) * 270f, 270.0).toFloat()
-            canvas.drawArc(rect, 135f, if (sweep < 10f) 20f else sweep, false, progressPaint)
-
-            canvas.drawText(String.format("%.1f", gbValue), width / 2, height / 2 + 10f, textPaint)
-            canvas.drawText("گیگابایت (GB)", width / 2, height / 2 + 55f, subTextPaint)
-        }
-    }
-}
+       
