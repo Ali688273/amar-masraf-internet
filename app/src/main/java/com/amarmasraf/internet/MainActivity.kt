@@ -20,8 +20,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Process
 import android.provider.Settings
-import android.telephony.SubscriptionManager
-import android.telephony.TelephonyManager
 import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
@@ -38,7 +36,7 @@ data class AppUsageInfo(
     val usageBytes: Long
 )
 
-enum class NetworkType { SIM1, SIM2, WIFI }
+enum class NetworkType { MOBILE, WIFI }
 enum class TimePeriod { TODAY, WEEK, MONTH }
 
 class MainActivity : AppCompatActivity() {
@@ -47,7 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var speedUploadTv: TextView
     private lateinit var dynamicContainer: LinearLayout
 
-    private var selectedNetwork = NetworkType.SIM1
+    private var selectedNetwork = NetworkType.MOBILE
     private var selectedPeriod = TimePeriod.TODAY
 
     private var lastRxBytes: Long = 0
@@ -69,7 +67,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(30, 40, 30, 40)
         }
 
-        // ۱. هدر اصلی
+        // هدر برنامه
         val headerLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -89,7 +87,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val subtitleTv = TextView(this).apply {
-            text = "پایش دقیق، مقایسه دوره‌ای و تحلیل هوشمند"
+            text = "پایش دقیق مصرف سیم‌کارت و وای‌فای"
             textSize = 12f
             setTextColor(Color.parseColor("#94A3B8"))
             setPadding(0, 4, 0, 0)
@@ -151,27 +149,23 @@ class MainActivity : AppCompatActivity() {
         val cardBgColor = Color.parseColor("#1E293B")
         val statsManager = getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
 
-        // انتخاب شبکه
+        // تب‌های انتخاب نوع شبکه (فقط سیم‌کارت و وای‌فای)
         val networkTabs = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, 10, 0, 15)
         }
 
-        networkTabs.addView(createTabCard("سیم‌کارت ۱", selectedNetwork == NetworkType.SIM1) {
-            selectedNetwork = NetworkType.SIM1
+        networkTabs.addView(createTabCard("📱 اینترنت سیم‌کارت", selectedNetwork == NetworkType.MOBILE) {
+            selectedNetwork = NetworkType.MOBILE
             refreshDashboard()
         })
-        networkTabs.addView(createTabCard("سیم‌کارت ۲", selectedNetwork == NetworkType.SIM2) {
-            selectedNetwork = NetworkType.SIM2
-            refreshDashboard()
-        })
-        networkTabs.addView(createTabCard("وای‌فای (Wi-Fi)", selectedNetwork == NetworkType.WIFI) {
+        networkTabs.addView(createTabCard("📶 وای‌فای (Wi-Fi)", selectedNetwork == NetworkType.WIFI) {
             selectedNetwork = NetworkType.WIFI
             refreshDashboard()
         })
         dynamicContainer.addView(networkTabs)
 
-        // انتخاب بازه
+        // تب‌های بازه زمانی
         val periodTabs = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, 0, 0, 25)
@@ -193,11 +187,10 @@ class MainActivity : AppCompatActivity() {
 
         val (startTime, endTime) = getTimeRange(selectedPeriod)
         val netTypeInt = if (selectedNetwork == NetworkType.WIFI) ConnectivityManager.TYPE_WIFI else ConnectivityManager.TYPE_MOBILE
-        val subscriberId = getSubscriberIdForNetwork(selectedNetwork)
 
-        val totalBytes = getNetworkBytes(statsManager, netTypeInt, subscriberId, startTime, endTime)
+        val totalBytes = getNetworkBytes(statsManager, netTypeInt, startTime, endTime)
 
-        // ۱. کارت اصلی نمودار
+        // کارت نمودار
         val chartCard = CardView(this).apply {
             radius = 28f
             setCardBackgroundColor(cardBgColor)
@@ -212,11 +205,7 @@ class MainActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_HORIZONTAL
         }
 
-        val networkTitle = when(selectedNetwork) {
-            NetworkType.SIM1 -> "مصرف سیم‌کارت ۱"
-            NetworkType.SIM2 -> "مصرف سیم‌کارت ۲"
-            NetworkType.WIFI -> "مصرف وای‌فای"
-        }
+        val networkTitle = if (selectedNetwork == NetworkType.MOBILE) "مصرف اینترنت سیم‌کارت" else "مصرف وای‌فای"
         val periodTitle = when(selectedPeriod) {
             TimePeriod.TODAY -> "(امروز)"
             TimePeriod.WEEK -> "(این هفته)"
@@ -241,15 +230,15 @@ class MainActivity : AppCompatActivity() {
         chartCard.addView(chartLayout)
         dynamicContainer.addView(chartCard)
 
-        // ۲. کارت جدول مقایسه‌ای دوره فعلی و دوره قبل
-        dynamicContainer.addView(createComparisonCard(statsManager, netTypeInt, subscriberId))
+        // کارت جدول مقایسه‌ای
+        dynamicContainer.addView(createComparisonCard(statsManager, netTypeInt))
 
-        // ۳. کارت پیش‌بینی هوشمند مصرف
+        // کارت پیش‌بینی مصرف
         if (selectedPeriod == TimePeriod.MONTH) {
             dynamicContainer.addView(createPredictionCard(totalBytes))
         }
 
-        // ۴. آمار تفکیکی برنامه‌ها
+        // لیست برنامه‌ها
         val appListTitle = TextView(this).apply {
             text = "📱 مصرف برنامه‌ها در این بازه"
             textSize = 15f
@@ -259,7 +248,7 @@ class MainActivity : AppCompatActivity() {
         }
         dynamicContainer.addView(appListTitle)
 
-        val appsList = getAppUsageList(statsManager, netTypeInt, subscriberId, startTime, endTime)
+        val appsList = getAppUsageList(statsManager, netTypeInt, startTime, endTime)
         if (appsList.isEmpty()) {
             val emptyTv = TextView(this).apply {
                 text = "هیچ مصرفی برای این بازه ثبت نشده است."
@@ -275,8 +264,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // جدول مقایسه‌ای هوشمند (امروز با دیروز / این هفته با هفته قبل)
-    private fun createComparisonCard(statsManager: NetworkStatsManager, networkType: Int, subscriberId: String?): CardView {
+    private fun createComparisonCard(statsManager: NetworkStatsManager, networkType: Int): CardView {
         val card = CardView(this).apply {
             radius = 24f
             setCardBackgroundColor(Color.parseColor("#1E293B"))
@@ -293,8 +281,8 @@ class MainActivity : AppCompatActivity() {
         val (currStart, currEnd) = getTimeRange(selectedPeriod)
         val (prevStart, prevEnd) = getPreviousTimeRange(selectedPeriod)
 
-        val currentUsage = getNetworkBytes(statsManager, networkType, subscriberId, currStart, currEnd)
-        val previousUsage = getNetworkBytes(statsManager, networkType, subscriberId, prevStart, prevEnd)
+        val currentUsage = getNetworkBytes(statsManager, networkType, currStart, currEnd)
+        val previousUsage = getNetworkBytes(statsManager, networkType, prevStart, prevEnd)
 
         val diff = currentUsage - previousUsage
         val isIncreased = diff > 0
@@ -320,7 +308,6 @@ class MainActivity : AppCompatActivity() {
         }
         layout.addView(title)
 
-        // ردیف جدول
         val tableLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setBackgroundColor(Color.parseColor("#0F172A"))
@@ -598,32 +585,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @SuppressLint("MissingPermission", "HardwareIds")
-    private fun getSubscriberIdForNetwork(network: NetworkType): String? {
-        if (network == NetworkType.WIFI) return null
-        return try {
-            val sm = getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
-            val list = sm.activeSubscriptionInfoList
-            val slotIndex = if (network == NetworkType.SIM1) 0 else 1
-
-            if (list != null && list.size > slotIndex) {
-                val subInfo = list[slotIndex]
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val tm = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-                    tm.createForSubscriptionId(subInfo.subscriptionId).subscriberId
-                } else {
-                    subInfo.subscriptionId.toString()
-                }
-            } else null
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun getNetworkBytes(statsManager: NetworkStatsManager, networkType: Int, subscriberId: String?, startTime: Long, endTime: Long): Long {
+    private fun getNetworkBytes(statsManager: NetworkStatsManager, networkType: Int, startTime: Long, endTime: Long): Long {
         var total = 0L
         try {
-            val stats = statsManager.querySummary(networkType, subscriberId, startTime, endTime)
+            val stats = statsManager.querySummary(networkType, null, startTime, endTime)
             val bucket = NetworkStats.Bucket()
             while (stats.hasNextBucket()) {
                 stats.getNextBucket(bucket)
@@ -636,12 +601,12 @@ class MainActivity : AppCompatActivity() {
         return total
     }
 
-    private fun getAppUsageList(statsManager: NetworkStatsManager, networkType: Int, subscriberId: String?, startTime: Long, endTime: Long): List<AppUsageInfo> {
+    private fun getAppUsageList(statsManager: NetworkStatsManager, networkType: Int, startTime: Long, endTime: Long): List<AppUsageInfo> {
         val usageMap = HashMap<String, Long>()
         val pm = packageManager
 
         try {
-            val stats = statsManager.querySummary(networkType, subscriberId, startTime, endTime)
+            val stats = statsManager.querySummary(networkType, null, startTime, endTime)
             val bucket = NetworkStats.Bucket()
             while (stats.hasNextBucket()) {
                 stats.getNextBucket(bucket)
