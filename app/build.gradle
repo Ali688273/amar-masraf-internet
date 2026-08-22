@@ -21,13 +21,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
 }
 
 dependencies {
@@ -35,7 +28,4 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-    
-    // استفاده از نسخه 2.1.8 جهت هماهنگی کامل متدها
-    implementation 'ir.tapsell.plus:tapsell-plus-sdk-android:2.1.8'
 }
