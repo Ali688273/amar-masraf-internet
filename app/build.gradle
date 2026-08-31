@@ -17,20 +17,10 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    signingConfigs {
-        release {
-            storeFile file("../release.keystore")
-            storePassword "android"
-            keyAlias "my-key-alias"
-            keyPassword "android"
-        }
-    }
-
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
         }
     }
 
@@ -54,4 +44,8 @@ dependencies {
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0'
+
+    // تبلیغات تپسل و شناسه تبلیغاتی بازار
+    implementation 'ir.tapsell.plus:tapsell-plus-sdk:2.2.0'
+    implementation 'com.google.android.gms:play-services-ads-identifier:18.0.1'
 }
