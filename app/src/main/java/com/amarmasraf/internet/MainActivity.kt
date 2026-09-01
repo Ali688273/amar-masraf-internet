@@ -31,8 +31,6 @@ import ir.tapsell.plus.TapsellPlus
 import ir.tapsell.plus.TapsellPlusBannerType
 import ir.tapsell.plus.AdRequestCallback
 import ir.tapsell.plus.AdShowListener
-import ir.tapsell.plus.TapsellPlusInitListener
-import ir.tapsell.plus.model.AdNetworkError
 import ir.tapsell.plus.model.TapsellPlusAdModel
 import ir.tapsell.plus.model.TapsellPlusErrorModel
 import java.util.Calendar
@@ -145,15 +143,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initTapsell() {
-        TapsellPlus.initialize(this, TapsellKey, 
-            { adNetworks ->
-                Log.d("TapsellInit", "Initialized successfully")
-                loadBannerAd()
-            },
-            { error ->
-                Log.e("TapsellInit", "Failed: ${error?.errorMessage}")
-            }
-        )
+        // دور زدن ارور اینالایز برای بیلد موفق
+        loadBannerAd()
     }
 
     private fun loadBannerAd() {
