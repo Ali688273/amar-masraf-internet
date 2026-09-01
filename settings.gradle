@@ -10,9 +10,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }
+        // مخزن اختصاصی تپسل
+        maven { url 'https://storage.tapsell.ir/sdk/maven' }
     }
 }
 
-rootProject.name = "MyInternetApp"
+rootProject.name = "amar-masraf-internet"
 include ':app'
