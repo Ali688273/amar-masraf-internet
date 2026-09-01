@@ -3,12 +3,6 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
-repositories {
-    google()
-    mavenCentral()
-    maven { url 'https://mvn.tapsell.ir/release' }
-}
-
 android {
     namespace 'com.amarmasraf.internet'
     compileSdk 34
