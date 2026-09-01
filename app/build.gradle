@@ -45,7 +45,6 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0'
 
-    // اتصال فایل‌های محلی و شناسه تبلیغاتی گوگل
-    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+    // شناسه تبلیغاتی استاندارد گوگل برای بازار
     implementation 'com.google.android.gms:play-services-ads-identifier:18.0.1'
 }
