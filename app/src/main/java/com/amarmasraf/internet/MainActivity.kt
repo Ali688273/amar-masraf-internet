@@ -1,15 +1,13 @@
 package com.amarmasraf.internet
 
-import android.annotation.SuppressLint
 import android.app.AppOpsManager
 import android.app.usage.NetworkStats
 import android.app.usage.NetworkStatsManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Canvas
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.net.ConnectivityManager
@@ -18,7 +16,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.Process
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
@@ -32,45 +29,42 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import ir.tapsell.plus.TapsellPlus
 import ir.tapsell.plus.TapsellPlusBannerType
+import ir.tapsell.plus.AdRequestCallback
+import ir.tapsell.plus.AdShowListener
+import ir.tapsell.plus.TapsellPlusInitListener
 import ir.tapsell.plus.model.AdNetworkError
 import ir.tapsell.plus.model.TapsellPlusAdModel
 import ir.tapsell.plus.model.TapsellPlusErrorModel
 import java.util.Calendar
 
-data class AppUsageInfo(
-    val appName: String,
-    val icon: Drawable?,
-    val usageBytes: Long
-)
-
-enum class NetworkType { MOBILE, WIFI }
-enum class TimePeriod { TODAY, WEEK, MONTH }
-
 class MainActivity : AppCompatActivity() {
 
-    private val TAPSELL_APP_KEY = "skdkrkqgpljebkgtnhnksnjsogjohskdglotogpbbkgdrqscslsbfshkgnbfdgrdglkffr"
-    private val TAPSELL_ZONE_ID = "66f7f24c084f7063d8091d37"
+    private val TapsellKey = "skdkrkqgpljebkgtnhnksnjsogjohskdglotogpbbkgdrqscslsbfshkgnbfdgrdglkffr"
+    private val BannerZoneId = "66f7f24c084f7063d8091d37"
 
-    private lateinit var speedDownloadTv: TextView
-    private lateinit var speedUploadTv: TextView
-    private lateinit var dynamicContainer: LinearLayout
-    private lateinit var adContainer: FrameLayout
+    private lateinit var downloadSpeedTv: TextView
+    private lateinit var uploadSpeedTv: TextView
+    private lateinit var contentLayout: LinearLayout
+    private lateinit var bannerContainer: FrameLayout
 
-    private var selectedNetwork = NetworkType.MOBILE
-    private var selectedPeriod = TimePeriod.TODAY
+    private var currentTab = 0 // 0: Mobile, 1: WiFi
+    private var currentPeriod = 0 // 0: Today, 1: Week, 2: Month
 
-    private var lastRxBytes: Long = 0
-    private var lastTxBytes: Long = 0
+    private var lastRx: Long = 0
+    private var lastTx: Long = 0
     private var lastTime: Long = 0
-    private val handler = Handler(Looper.getMainLooper())
+    private val speedHandler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val bgColor = Color.parseColor("#0F172A")
         val rootLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(bgColor)
+            setBackgroundColor(Color.parseColor("#0F172A"))
+        }
+
+        val scrollContainer = ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
         }
 
         val mainLayout = LinearLayout(this).apply {
@@ -78,486 +72,297 @@ class MainActivity : AppCompatActivity() {
             setPadding(30, 40, 30, 40)
         }
 
+        // App Header
         val headerLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, 0, 0, 20)
+            setPadding(0, 0, 0, 30)
         }
 
-        val headerTextLayout = LinearLayout(this).apply {
+        val titleLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
 
         val titleTv = TextView(this).apply {
             text = "آمار مصرف اینترنت"
-            textSize = 20f
+            textSize = 22f
             setTextColor(Color.WHITE)
             typeface = Typeface.DEFAULT_BOLD
         }
 
-        val subtitleTv = TextView(this).apply {
-            text = "پایش دقیق مصرف سیم‌کارت و وای‌فای"
-            textSize = 12f
+        val subTitleTv = TextView(this).apply {
+            text = "مدیریت و پایش مصرف داده"
+            textSize = 13f
             setTextColor(Color.parseColor("#94A3B8"))
             setPadding(0, 4, 0, 0)
         }
 
-        headerTextLayout.addView(titleTv)
-        headerTextLayout.addView(subtitleTv)
-
-        val headerIcon = CardView(this).apply {
-            radius = 24f
-            setCardBackgroundColor(Color.parseColor("#6366F1"))
-            val iconTv = TextView(context).apply {
-                text = "📊"
-                textSize = 20f
-                gravity = Gravity.CENTER
-                setPadding(20, 20, 20, 20)
-            }
-            addView(iconTv)
-        }
-
-        headerLayout.addView(headerTextLayout)
-        headerLayout.addView(headerIcon)
+        titleLayout.addView(titleTv)
+        titleLayout.addView(subTitleTv)
+        headerLayout.addView(titleLayout)
         mainLayout.addView(headerLayout)
 
-        if (!hasUsageStatsPermission()) {
-            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-            val permNotice = TextView(this).apply {
-                text = "لطفاً دسترسی به آمار مصرف (Usage Access) را در تنظیمات فعال کرده و برنامه را مجدداً باز کنید."
-                textSize = 14f
+        if (!checkUsageStatsPermission()) {
+            val permissionNotice = TextView(this).apply {
+                text = "لطفاً دسترسی به آمار مصرف (Usage Access) را برای این برنامه فعال کنید."
+                textSize = 15f
                 setTextColor(Color.parseColor("#EF4444"))
                 gravity = Gravity.CENTER
-                setPadding(0, 20, 0, 20)
+                setPadding(0, 50, 0, 50)
             }
-            mainLayout.addView(permNotice)
+            mainLayout.addView(permissionNotice)
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         } else {
+            // Live Speed Card
             mainLayout.addView(createSpeedCard())
 
-            dynamicContainer = LinearLayout(this).apply {
+            // Dynamic Content Container
+            contentLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
             }
+            mainLayout.addView(contentLayout)
 
-            mainLayout.addView(dynamicContainer)
-            refreshDashboard()
+            refreshUI()
         }
 
-        val scrollView = ScrollView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
-            addView(mainLayout)
-        }
-        rootLayout.addView(scrollView)
+        scrollContainer.addView(mainLayout)
+        rootLayout.addView(scrollContainer)
 
-        adContainer = FrameLayout(this).apply {
+        // Tapsell Banner Container at bottom
+        bannerContainer = FrameLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
         }
-        rootLayout.addView(adContainer)
+        rootLayout.addView(bannerContainer)
 
         setContentView(rootLayout)
 
-        startSpeedMonitor()
-        initTapsellBanner()
+        startSpeedChecker()
+        initTapsell()
     }
 
-    private fun initTapsellBanner() {
-        TapsellPlus.initialize(this, TAPSELL_APP_KEY, object : ir.tapsell.plus.TapsellPlusInitListener {
-            override fun onInitializeSuccess(adNetworks: Any) {
-                Log.d("Tapsell", "Tapsell initialized successfully")
-                requestStandardBanner()
+    private fun initTapsell() {
+        TapsellPlus.initialize(this, TapsellKey, object : TapsellPlusInitListener() {
+            override fun onInitializeSuccess(adNetworks: String?) {
+                Log.d("TapsellInit", "Initialized successfully")
+                loadBannerAd()
             }
 
-            override fun onInitializationFailed(adNetworks: Any, error: AdNetworkError) {
-                Log.e("Tapsell", "Initialization Error: ${error.errorMessage}")
+            override fun onInitializationFailed(adNetworks: String?, error: AdNetworkError?) {
+                Log.e("TapsellInit", "Failed: ${error?.errorMessage}")
             }
         })
     }
 
-    private fun requestStandardBanner() {
+    private fun loadBannerAd() {
         TapsellPlus.requestStandardBannerAd(
             this,
-            TAPSELL_ZONE_ID,
+            BannerZoneId,
             TapsellPlusBannerType.BANNER_320x50,
-            object : ir.tapsell.plus.AdRequestCallback() {
-                override fun response(tapsellPlusAdModel: TapsellPlusAdModel) {
+            object : AdRequestCallback() {
+                override fun response(model: TapsellPlusAdModel) {
                     TapsellPlus.showStandardBannerAd(
                         this@MainActivity,
-                        tapsellPlusAdModel.responseId,
-                        adContainer,
-                        object : ir.tapsell.plus.AdShowListener() {
-                            override fun onOpened(tapsellPlusAdModel: TapsellPlusAdModel) {}
-                            override fun onError(tapsellPlusErrorModel: TapsellPlusErrorModel) {
-                                Log.e("Tapsell", "Banner Show Error: ${tapsellPlusErrorModel.errorMessage}")
+                        model.responseId,
+                        bannerContainer,
+                        object : AdShowListener() {
+                            override fun onOpened(model: TapsellPlusAdModel) {}
+                            override fun onError(error: TapsellPlusErrorModel) {
+                                Log.e("TapsellShow", "Error: ${error.errorMessage}")
                             }
                         }
                     )
                 }
 
-                override fun error(tapsellPlusErrorModel: TapsellPlusErrorModel) {
-                    Log.e("Tapsell", "Banner Request Error: ${tapsellPlusErrorModel.errorMessage}")
+                override fun onError(error: TapsellPlusErrorModel) {
+                    Log.e("TapsellRequest", "Error: ${error.errorMessage}")
                 }
             }
         )
     }
 
-    private fun refreshDashboard() {
-        dynamicContainer.removeAllViews()
-        val cardBgColor = Color.parseColor("#1E293B")
-        val statsManager = getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
+    private fun refreshUI() {
+        contentLayout.removeAllViews()
 
-        val networkTabs = LinearLayout(this).apply {
+        // Tabs for Mobile / WiFi
+        val tabLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            setPadding(0, 10, 0, 15)
+            setPadding(0, 10, 0, 20)
         }
 
-        networkTabs.addView(createTabCard("📱 اینترنت سیم‌کارت", selectedNetwork == NetworkType.MOBILE) {
-            selectedNetwork = NetworkType.MOBILE
-            refreshDashboard()
+        tabLayout.addView(createTabButton("سیم‌کارت", currentTab == 0) {
+            currentTab = 0
+            refreshUI()
         })
-        networkTabs.addView(createTabCard("📶 وای‌فای (Wi-Fi)", selectedNetwork == NetworkType.WIFI) {
-            selectedNetwork = NetworkType.WIFI
-            refreshDashboard()
+        tabLayout.addView(createTabButton("وای‌فای", currentTab == 1) {
+            currentTab = 1
+            refreshUI()
         })
-        dynamicContainer.addView(networkTabs)
+        contentLayout.addView(tabLayout)
 
-        val periodTabs = LinearLayout(this).apply {
+        // Period Chips (Today, Week, Month)
+        val periodLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, 0, 0, 25)
         }
 
-        periodTabs.addView(createChipCard("امروز", selectedPeriod == TimePeriod.TODAY) {
-            selectedPeriod = TimePeriod.TODAY
-            refreshDashboard()
+        periodLayout.addView(createChipButton("امروز", currentPeriod == 0) {
+            currentPeriod = 0
+            refreshUI()
         })
-        periodTabs.addView(createChipCard("این هفته", selectedPeriod == TimePeriod.WEEK) {
-            selectedPeriod = TimePeriod.WEEK
-            refreshDashboard()
+        periodLayout.addView(createChipButton("این هفته", currentPeriod == 1) {
+            currentPeriod = 1
+            refreshUI()
         })
-        periodTabs.addView(createChipCard("این ماه", selectedPeriod == TimePeriod.MONTH) {
-            selectedPeriod = TimePeriod.MONTH
-            refreshDashboard()
+        periodLayout.addView(createChipButton("این ماه", currentPeriod == 2) {
+            currentPeriod = 2
+            refreshUI()
         })
-        dynamicContainer.addView(periodTabs)
+        contentLayout.addView(periodLayout)
 
-        val (startTime, endTime) = getTimeRange(selectedPeriod)
-        val netTypeInt = if (selectedNetwork == NetworkType.WIFI) ConnectivityManager.TYPE_WIFI else ConnectivityManager.TYPE_MOBILE
+        val statsManager = getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
+        val netType = if (currentTab == 0) ConnectivityManager.TYPE_MOBILE else ConnectivityManager.TYPE_WIFI
+        val (start, end) = getTimeRange(currentPeriod)
 
-        val totalBytes = getNetworkBytes(statsManager, netTypeInt, startTime, endTime)
+        // Total Usage Card
+        val totalBytes = queryNetworkTotal(statsManager, netType, start, end)
+        contentLayout.addView(createTotalUsageCard(totalBytes))
 
-        val chartCard = CardView(this).apply {
-            radius = 28f
-            setCardBackgroundColor(cardBgColor)
-            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            params.setMargins(0, 0, 0, 25)
-            layoutParams = params
-        }
-
-        val chartLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(30, 30, 30, 30)
-            gravity = Gravity.CENTER_HORIZONTAL
-        }
-
-        val networkTitle = if (selectedNetwork == NetworkType.MOBILE) "مصرف اینترنت سیم‌کارت" else "مصرف وای‌فای"
-        val periodTitle = when(selectedPeriod) {
-            TimePeriod.TODAY -> "(امروز)"
-            TimePeriod.WEEK -> "(این هفته)"
-            TimePeriod.MONTH -> "(این ماه)"
-        }
-
-        val chartTitle = TextView(this).apply {
-            text = "$networkTitle $periodTitle"
-            textSize = 14f
-            setTextColor(Color.parseColor("#94A3B8"))
-            gravity = Gravity.RIGHT
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        }
-
-        val circleView = CircularProgressView(this, formatBytes(totalBytes))
-        circleView.layoutParams = LinearLayout.LayoutParams(360, 360).apply {
-            setMargins(0, 15, 0, 15)
-        }
-
-        chartLayout.addView(chartTitle)
-        chartLayout.addView(circleView)
-        chartCard.addView(chartLayout)
-        dynamicContainer.addView(chartCard)
-
-        dynamicContainer.addView(createComparisonCard(statsManager, netTypeInt))
-
-        if (selectedPeriod == TimePeriod.MONTH) {
-            dynamicContainer.addView(createPredictionCard(totalBytes))
-        }
-
-        val appListTitle = TextView(this).apply {
-            text = "📱 مصرف برنامه‌ها در این بازه"
-            textSize = 15f
+        // App List Title
+        val listTitle = TextView(this).apply {
+            text = "مصرف اینترنت برنامه‌ها"
+            textSize = 16f
             setTextColor(Color.WHITE)
             typeface = Typeface.DEFAULT_BOLD
-            setPadding(10, 15, 10, 15)
+            setPadding(5, 20, 5, 10)
         }
-        dynamicContainer.addView(appListTitle)
+        contentLayout.addView(listTitle)
 
-        val appsList = getAppUsageList(statsManager, netTypeInt, startTime, endTime)
-        if (appsList.isEmpty()) {
+        // Apps Usage List
+        val appList = queryAppUsageList(statsManager, netType, start, end)
+        if (appList.isEmpty()) {
             val emptyTv = TextView(this).apply {
-                text = "هیچ مصرفی برای این بازه ثبت نشده است."
+                text = "داده‌ای برای این بازه زمانی یافت نشد."
                 setTextColor(Color.parseColor("#64748B"))
                 gravity = Gravity.CENTER
-                setPadding(0, 20, 0, 20)
+                setPadding(0, 40, 0, 40)
             }
-            dynamicContainer.addView(emptyTv)
+            contentLayout.addView(emptyTv)
         } else {
-            for (app in appsList) {
-                dynamicContainer.addView(createAppRow(app, cardBgColor))
+            for (app in appList) {
+                contentLayout.addView(createAppItemRow(app))
             }
-        }
-    }
-
-    private fun createComparisonCard(statsManager: NetworkStatsManager, networkType: Int): CardView {
-        val card = CardView(this).apply {
-            radius = 24f
-            setCardBackgroundColor(Color.parseColor("#1E293B"))
-            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            params.setMargins(0, 0, 0, 25)
-            layoutParams = params
-        }
-
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(25, 25, 25, 25)
-        }
-
-        val (currStart, currEnd) = getTimeRange(selectedPeriod)
-        val (prevStart, prevEnd) = getPreviousTimeRange(selectedPeriod)
-
-        val currentUsage = getNetworkBytes(statsManager, networkType, currStart, currEnd)
-        val previousUsage = getNetworkBytes(statsManager, networkType, prevStart, prevEnd)
-
-        val diff = currentUsage - previousUsage
-        val isIncreased = diff > 0
-        val percentage = if (previousUsage > 0) Math.abs((diff.toDouble() / previousUsage.toDouble()) * 100) else 0.0
-
-        val periodLabel = when(selectedPeriod) {
-            TimePeriod.TODAY -> "امروز"
-            TimePeriod.WEEK -> "این هفته"
-            TimePeriod.MONTH -> "این ماه"
-        }
-        val prevLabel = when(selectedPeriod) {
-            TimePeriod.TODAY -> "دیروز"
-            TimePeriod.WEEK -> "هفته قبل"
-            TimePeriod.MONTH -> "ماه قبل"
-        }
-
-        val title = TextView(this).apply {
-            text = "🔄 جدول مقایسه مصرف ($periodLabel با $prevLabel)"
-            textSize = 14f
-            setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
-            setPadding(0, 0, 0, 15)
-        }
-        layout.addView(title)
-
-        val tableLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setBackgroundColor(Color.parseColor("#0F172A"))
-            setPadding(20, 20, 20, 20)
-        }
-
-        val currBox = createCompareBox(periodLabel, formatBytes(currentUsage), "#3B82F6")
-        val prevBox = createCompareBox(prevLabel, formatBytes(previousUsage), "#94A3B8")
-
-        val statusColor = if (isIncreased) "#EF4444" else "#10B981"
-        val statusSymbol = if (isIncreased) "▲ +" else "▼ -"
-        val statusText = if (previousUsage > 0) String.format("%s%.1f٪", statusSymbol, percentage) else "جدید"
-        val diffBox = createCompareBox("تغییرات", statusText, statusColor)
-
-        tableLayout.addView(currBox)
-        tableLayout.addView(prevBox)
-        tableLayout.addView(diffBox)
-
-        layout.addView(tableLayout)
-        card.addView(layout)
-        return card
-    }
-
-    private fun createCompareBox(title: String, value: String, colorHex: String): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-
-            val tTv = TextView(context).apply {
-                text = title
-                textSize = 11f
-                setTextColor(Color.parseColor("#94A3B8"))
-                gravity = Gravity.CENTER
-            }
-            val vTv = TextView(context).apply {
-                text = value
-                textSize = 12f
-                setTextColor(Color.parseColor(colorHex))
-                typeface = Typeface.DEFAULT_BOLD
-                gravity = Gravity.CENTER
-                setPadding(0, 6, 0, 0)
-            }
-            addView(tTv)
-            addView(vTv)
-        }
-    }
-
-    private fun createPredictionCard(currentMonthBytes: Long): CardView {
-        val card = CardView(this).apply {
-            radius = 24f
-            setCardBackgroundColor(Color.parseColor("#1E293B"))
-            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            params.setMargins(0, 0, 0, 25)
-            layoutParams = params
-        }
-
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(25, 25, 25, 25)
-        }
-
-        val calendar = Calendar.getInstance()
-        val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
-        val maxDays = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-
-        val predictedBytes = if (currentDay > 0) (currentMonthBytes / currentDay) * maxDays else 0L
-
-        val title = TextView(this).apply {
-            text = "🔮 پیش‌بینی هوشمند تا پایان ماه"
-            textSize = 14f
-            setTextColor(Color.WHITE)
-            typeface = Typeface.DEFAULT_BOLD
-            setPadding(0, 0, 0, 10)
-        }
-
-        val desc = TextView(this).apply {
-            text = "با توجه به الگوی مصرف $currentDay روز گذشته، پیش‌بینی می‌شود مصرف این ماه شما به ${formatBytes(predictedBytes)} برسد."
-            textSize = 12f
-            setTextColor(Color.parseColor("#CBD5E1"))
-        }
-
-        layout.addView(title)
-        layout.addView(desc)
-        card.addView(layout)
-        return card
-    }
-
-    private fun createTabCard(title: String, isSelected: Boolean, onClick: () -> Unit): CardView {
-        return CardView(this).apply {
-            radius = 16f
-            setCardBackgroundColor(if (isSelected) Color.parseColor("#6366F1") else Color.parseColor("#1E293B"))
-            val params = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-            params.setMargins(6, 0, 6, 0)
-            layoutParams = params
-            setOnClickListener { onClick() }
-
-            val layout = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(12, 18, 12, 18)
-                gravity = Gravity.CENTER
-            }
-
-            val tView = TextView(context).apply {
-                text = title
-                textSize = 12f
-                setTextColor(Color.WHITE)
-                typeface = Typeface.DEFAULT_BOLD
-            }
-            layout.addView(tView)
-            addView(layout)
-        }
-    }
-
-    private fun createChipCard(title: String, isSelected: Boolean, onClick: () -> Unit): CardView {
-        return CardView(this).apply {
-            radius = 20f
-            setCardBackgroundColor(if (isSelected) Color.parseColor("#3B82F6") else Color.parseColor("#0F172A"))
-            val params = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-            params.setMargins(6, 0, 6, 0)
-            layoutParams = params
-            setOnClickListener { onClick() }
-
-            val tView = TextView(context).apply {
-                text = title
-                textSize = 11f
-                setTextColor(if (isSelected) Color.WHITE else Color.parseColor("#94A3B8"))
-                gravity = Gravity.CENTER
-                setPadding(8, 12, 8, 12)
-            }
-            addView(tView)
         }
     }
 
     private fun createSpeedCard(): CardView {
-        val cardBgColor = Color.parseColor("#1E293B")
-        val speedCard = CardView(this).apply {
+        val card = CardView(this).apply {
             radius = 24f
-            setCardBackgroundColor(cardBgColor)
+            setCardBackgroundColor(Color.parseColor("#1E293B"))
             val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             params.setMargins(0, 0, 0, 20)
             layoutParams = params
         }
 
-        val speedLayout = LinearLayout(this).apply {
+        val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(25, 25, 25, 25)
         }
 
-        val speedTitle = TextView(this).apply {
-            text = "⚡ سرعت زنده شبکه"
+        val title = TextView(this).apply {
+            text = "⚡ سرعت لحظه‌ای شبکه"
             textSize = 14f
             setTextColor(Color.WHITE)
             typeface = Typeface.DEFAULT_BOLD
             setPadding(0, 0, 0, 15)
         }
 
-        val speedDetailsLayout = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val speedsLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
 
-        val downCard = LinearLayout(this).apply {
+        val dlBox = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.parseColor("#0F172A"))
-            setPadding(15, 15, 15, 15)
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(0, 0, 8, 0) }
+            setPadding(20, 15, 20, 15)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(0, 0, 8, 0)
+            }
         }
-        val downLabel = TextView(this).apply { text = "⬇ دانلود"; textSize = 10f; setTextColor(Color.parseColor("#94A3B8")) }
-        speedDownloadTv = TextView(this).apply { text = "0.0 Mb/s"; textSize = 13f; setTextColor(Color.parseColor("#10B981")); typeface = Typeface.DEFAULT_BOLD }
-        downCard.addView(downLabel); downCard.addView(speedDownloadTv)
+        val dlLabel = TextView(this).apply { text = "دانلود"; textSize = 11f; setTextColor(Color.parseColor("#94A3B8")) }
+        downloadSpeedTv = TextView(this).apply { text = "0.0 Mb/s"; textSize = 14f; setTextColor(Color.parseColor("#10B981")); typeface = Typeface.DEFAULT_BOLD }
+        dlBox.addView(dlLabel)
+        dlBox.addView(downloadSpeedTv)
 
-        val upCard = LinearLayout(this).apply {
+        val ulBox = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.parseColor("#0F172A"))
-            setPadding(15, 15, 15, 15)
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(8, 0, 0, 0) }
+            setPadding(20, 15, 20, 15)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(8, 0, 0, 0)
+            }
         }
-        val upLabel = TextView(this).apply { text = "⬆ آپلود"; textSize = 10f; setTextColor(Color.parseColor("#94A3B8")) }
-        speedUploadTv = TextView(this).apply { text = "0.0 Mb/s"; textSize = 13f; setTextColor(Color.parseColor("#3B82F6")); typeface = Typeface.DEFAULT_BOLD }
-        upCard.addView(upLabel); upCard.addView(speedUploadTv)
+        val ulLabel = TextView(this).apply { text = "آپلود"; textSize = 11f; setTextColor(Color.parseColor("#94A3B8")) }
+        uploadSpeedTv = TextView(this).apply { text = "0.0 Mb/s"; textSize = 14f; setTextColor(Color.parseColor("#3B82F6")); typeface = Typeface.DEFAULT_BOLD }
+        ulBox.addView(ulLabel)
+        ulBox.addView(uploadSpeedTv)
 
-        speedDetailsLayout.addView(downCard)
-        speedDetailsLayout.addView(upCard)
-        speedLayout.addView(speedTitle)
-        speedLayout.addView(speedDetailsLayout)
-        speedCard.addView(speedLayout)
-        return speedCard
+        speedsLayout.addView(dlBox)
+        speedsLayout.addView(ulBox)
+        layout.addView(title)
+        layout.addView(speedsLayout)
+        card.addView(layout)
+        return card
     }
 
-    private fun createAppRow(app: AppUsageInfo, cardBgColor: Int): CardView {
+    private fun createTotalUsageCard(bytes: Long): CardView {
         val card = CardView(this).apply {
-            radius = 18f
-            setCardBackgroundColor(cardBgColor)
+            radius = 24f
+            setCardBackgroundColor(Color.parseColor("#1E293B"))
             val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            params.setMargins(0, 0, 0, 14)
+            params.setMargins(0, 0, 0, 20)
             layoutParams = params
         }
 
-        val row = LinearLayout(this).apply {
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(30, 30, 30, 30)
+            gravity = Gravity.CENTER
+        }
+
+        val title = TextView(this).apply {
+            text = "مجموع مصرف در این دوره"
+            textSize = 13f
+            setTextColor(Color.parseColor("#94A3B8"))
+        }
+
+        val value = TextView(this).apply {
+            text = formatBytes(bytes)
+            textSize = 24f
+            setTextColor(Color.parseColor("#818CF8"))
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(0, 10, 0, 0)
+        }
+
+        layout.addView(title)
+        layout.addView(value)
+        card.addView(layout)
+        return card
+    }
+
+    private fun createAppItemRow(app: AppInfo): CardView {
+        val card = CardView(this).apply {
+            radius = 16f
+            setCardBackgroundColor(Color.parseColor("#1E293B"))
+            val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            params.setMargins(0, 0, 0, 12)
+            layoutParams = params
+        }
+
+        val layout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(20, 16, 20, 16)
             gravity = Gravity.CENTER_VERTICAL
@@ -565,83 +370,98 @@ class MainActivity : AppCompatActivity() {
 
         val iconView = ImageView(this).apply {
             setImageDrawable(app.icon ?: packageManager.defaultActivityIcon)
-            layoutParams = LinearLayout.LayoutParams(70, 70)
+            layoutParams = LinearLayout.LayoutParams(64, 64)
         }
 
         val nameView = TextView(this).apply {
-            text = app.appName
-            textSize = 13f
+            text = app.name
+            textSize = 14f
             setTextColor(Color.WHITE)
             typeface = Typeface.DEFAULT_BOLD
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(16, 0, 16, 0) }
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                setMargins(16, 0, 16, 0)
+            }
         }
 
         val usageView = TextView(this).apply {
-            text = formatBytes(app.usageBytes)
-            textSize = 12f
-            setTextColor(Color.parseColor("#818CF8"))
+            text = formatBytes(app.bytes)
+            textSize = 13f
+            setTextColor(Color.parseColor("#38BDF8"))
             typeface = Typeface.DEFAULT_BOLD
         }
 
-        row.addView(iconView)
-        row.addView(nameView)
-        row.addView(usageView)
-        card.addView(row)
+        layout.addView(iconView)
+        layout.addView(nameView)
+        layout.addView(usageView)
+        card.addView(layout)
         return card
     }
 
-    private fun getTimeRange(period: TimePeriod): Pair<Long, Long> {
-        val calendar = Calendar.getInstance()
-        val endTime = calendar.timeInMillis
+    private fun createTabButton(title: String, isSelected: Boolean, onClick: () -> Unit): CardView {
+        return CardView(this).apply {
+            radius = 16f
+            setCardBackgroundColor(if (isSelected) Color.parseColor("#6366F1") else Color.parseColor("#1E293B"))
+            val params = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            params.setMargins(4, 0, 4, 0)
+            layoutParams = params
+            setOnClickListener { onClick() }
 
-        when (period) {
-            TimePeriod.TODAY -> {
-                calendar.set(Calendar.HOUR_OF_DAY, 0)
-                calendar.set(Calendar.MINUTE, 0)
-                calendar.set(Calendar.SECOND, 0)
-                calendar.set(Calendar.MILLISECOND, 0)
+            val tv = TextView(context).apply {
+                text = title
+                textSize = 13f
+                setTextColor(Color.WHITE)
+                gravity = Gravity.CENTER
+                setPadding(15, 18, 15, 18)
+                typeface = Typeface.DEFAULT_BOLD
             }
-            TimePeriod.WEEK -> {
-                calendar.add(Calendar.DAY_OF_YEAR, -7)
-            }
-            TimePeriod.MONTH -> {
-                calendar.add(Calendar.MONTH, -1)
-            }
-        }
-        return Pair(calendar.timeInMillis, endTime)
-    }
-
-    private fun getPreviousTimeRange(period: TimePeriod): Pair<Long, Long> {
-        val calendar = Calendar.getInstance()
-        when (period) {
-            TimePeriod.TODAY -> {
-                calendar.add(Calendar.DAY_OF_YEAR, -1)
-                calendar.set(Calendar.HOUR_OF_DAY, 0)
-                calendar.set(Calendar.MINUTE, 0)
-                calendar.set(Calendar.SECOND, 0)
-                val start = calendar.timeInMillis
-                calendar.set(Calendar.HOUR_OF_DAY, 23)
-                calendar.set(Calendar.MINUTE, 59)
-                calendar.set(Calendar.SECOND, 59)
-                return Pair(start, calendar.timeInMillis)
-            }
-            TimePeriod.WEEK -> {
-                val end = calendar.timeInMillis - (7 * 24 * 60 * 60 * 1000L)
-                val start = end - (7 * 24 * 60 * 60 * 1000L)
-                return Pair(start, end)
-            }
-            TimePeriod.MONTH -> {
-                val end = calendar.timeInMillis - (30 * 24 * 60 * 60 * 1000L)
-                val start = end - (30 * 24 * 60 * 60 * 1000L)
-                return Pair(start, end)
-            }
+            addView(tv)
         }
     }
 
-    private fun getNetworkBytes(statsManager: NetworkStatsManager, networkType: Int, startTime: Long, endTime: Long): Long {
+    private fun createChipButton(title: String, isSelected: Boolean, onClick: () -> Unit): CardView {
+        return CardView(this).apply {
+            radius = 20f
+            setCardBackgroundColor(if (isSelected) Color.parseColor("#3B82F6") else Color.parseColor("#0F172A"))
+            val params = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            params.setMargins(4, 0, 4, 0)
+            layoutParams = params
+            setOnClickListener { onClick() }
+
+            val tv = TextView(context).apply {
+                text = title
+                textSize = 12f
+                setTextColor(if (isSelected) Color.WHITE else Color.parseColor("#94A3B8"))
+                gravity = Gravity.CENTER
+                setPadding(10, 12, 10, 12)
+            }
+            addView(tv)
+        }
+    }
+
+    private fun getTimeRange(period: Int): Pair<Long, Long> {
+        val cal = Calendar.getInstance()
+        val endTime = cal.timeInMillis
+        when (period) {
+            0 -> { // Today
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+            }
+            1 -> { // Week
+                cal.add(Calendar.DAY_OF_YEAR, -7)
+            }
+            2 -> { // Month
+                cal.add(Calendar.MONTH, -1)
+            }
+        }
+        return Pair(cal.timeInMillis, endTime)
+    }
+
+    private fun queryNetworkTotal(statsManager: NetworkStatsManager, netType: Int, start: Long, end: Long): Long {
         var total = 0L
         try {
-            val stats = statsManager.querySummary(networkType, null, startTime, endTime)
+            val stats = statsManager.querySummary(netType, null, start, end)
             val bucket = NetworkStats.Bucket()
             while (stats.hasNextBucket()) {
                 stats.getNextBucket(bucket)
@@ -654,23 +474,22 @@ class MainActivity : AppCompatActivity() {
         return total
     }
 
-    private fun getAppUsageList(statsManager: NetworkStatsManager, networkType: Int, startTime: Long, endTime: Long): List<AppUsageInfo> {
-        val usageMap = HashMap<String, Long>()
+    private fun queryAppUsageList(statsManager: NetworkStatsManager, netType: Int, start: Long, end: Long): List<AppInfo> {
+        val map = HashMap<String, Long>()
         val pm = packageManager
-
         try {
-            val stats = statsManager.querySummary(networkType, null, startTime, endTime)
+            val stats = statsManager.querySummary(netType, null, start, end)
             val bucket = NetworkStats.Bucket()
             while (stats.hasNextBucket()) {
                 stats.getNextBucket(bucket)
                 val uid = bucket.uid
                 val bytes = bucket.rxBytes + bucket.txBytes
-                if (bytes < 10 * 1024) continue
+                if (bytes < 5120) continue // Skip very low traffic
 
-                val packages = pm.getPackagesForUid(uid)
-                if (packages != null && packages.isNotEmpty()) {
-                    val pkgName = packages[0]
-                    usageMap[pkgName] = (usageMap[pkgName] ?: 0L) + bytes
+                val pkgs = pm.getPackagesForUid(uid)
+                if (pkgs != null && pkgs.isNotEmpty()) {
+                    val pkg = pkgs[0]
+                    map[pkg] = (map[pkg] ?: 0L) + bytes
                 }
             }
             stats.close()
@@ -678,27 +497,26 @@ class MainActivity : AppCompatActivity() {
             e.printStackTrace()
         }
 
-        val resultList = mutableListOf<AppUsageInfo>()
-        for ((pkgName, bytes) in usageMap) {
+        val list = mutableListOf<AppInfo>()
+        for ((pkg, bytes) in map) {
             try {
-                val appInfo = pm.getApplicationInfo(pkgName, 0)
-                val appName = pm.getApplicationLabel(appInfo).toString()
+                val appInfo = pm.getApplicationInfo(pkg, 0)
+                val name = pm.getApplicationLabel(appInfo).toString()
                 val icon = pm.getApplicationIcon(appInfo)
-                resultList.add(AppUsageInfo(appName, icon, bytes))
+                list.add(AppInfo(name, icon, bytes))
             } catch (e: Exception) {
                 continue
             }
         }
-
-        return resultList.sortedByDescending { it.usageBytes }
+        return list.sortedByDescending { it.bytes }
     }
 
-    private fun startSpeedMonitor() {
-        lastRxBytes = TrafficStats.getTotalRxBytes()
-        lastTxBytes = TrafficStats.getTotalTxBytes()
+    private fun startSpeedChecker() {
+        lastRx = TrafficStats.getTotalRxBytes()
+        lastTx = TrafficStats.getTotalTxBytes()
         lastTime = System.currentTimeMillis()
 
-        handler.postDelayed(object : Runnable {
+        speedHandler.postDelayed(object : Runnable {
             override fun run() {
                 val currentRx = TrafficStats.getTotalRxBytes()
                 val currentTx = TrafficStats.getTotalTxBytes()
@@ -706,28 +524,28 @@ class MainActivity : AppCompatActivity() {
 
                 val timeDiff = (currentTime - lastTime) / 1000.0
                 if (timeDiff > 0) {
-                    val rxSpeed = ((currentRx - lastRxBytes) * 8 / timeDiff) / (1024 * 1024)
-                    val txSpeed = ((currentTx - lastTxBytes) * 8 / timeDiff) / (1024 * 1024)
+                    val dlSpeed = ((currentRx - lastRx) * 8 / timeDiff) / (1024 * 1024)
+                    val ulSpeed = ((currentTx - lastTx) * 8 / timeDiff) / (1024 * 1024)
 
-                    speedDownloadTv.text = String.format("%.1f Mb/s", if (rxSpeed < 0) 0.0 else rxSpeed)
-                    speedUploadTv.text = String.format("%.1f Mb/s", if (txSpeed < 0) 0.0 else txSpeed)
+                    downloadSpeedTv.text = String.format("%.1f Mb/s", if (dlSpeed < 0) 0.0 else dlSpeed)
+                    uploadSpeedTv.text = String.format("%.1f Mb/s", if (ulSpeed < 0) 0.0 else ulSpeed)
                 }
 
-                lastRxBytes = currentRx
-                lastTxBytes = currentTx
+                lastRx = currentRx
+                lastTx = currentTx
                 lastTime = currentTime
 
-                handler.postDelayed(this, 2000)
+                speedHandler.postDelayed(this, 2000)
             }
         }, 2000)
     }
 
-    private fun hasUsageStatsPermission(): Boolean {
+    private fun checkUsageStatsPermission(): Boolean {
         val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            appOps.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName)
+            appOps.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), packageName)
         } else {
-            appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName)
+            appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), packageName)
         }
         return mode == AppOpsManager.MODE_ALLOWED
     }
@@ -736,47 +554,17 @@ class MainActivity : AppCompatActivity() {
         val kb = bytes / 1024.0
         val mb = kb / 1024.0
         val gb = mb / 1024.0
-
         return when {
             gb >= 1.0 -> String.format("%.2f گیگابایت", gb)
-            mb >= 1.0 -> String.format("%.0f مگابایت", mb)
+            mb >= 1.0 -> String.format("%.1f مگابایت", mb)
             kb >= 1.0 -> String.format("%.0f کیلوبایت", kb)
             else -> "$bytes بایت"
         }
     }
 
-    class CircularProgressView(context: Context, private val formattedText: String) : View(context) {
-        private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#334155")
-            style = Paint.Style.STROKE
-            strokeWidth = 22f
-        }
-
-        private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#6366F1")
-            style = Paint.Style.STROKE
-            strokeWidth = 24f
-            strokeCap = Paint.Cap.ROUND
-        }
-
-        private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE
-            textSize = 36f
-            typeface = Typeface.DEFAULT_BOLD
-            textAlign = Paint.Align.CENTER
-        }
-
-        override fun onDraw(canvas: Canvas) {
-            super.onDraw(canvas)
-            val w = width.toFloat()
-            val h = height.toFloat()
-            val radius = (Math.min(w, h) / 2) - 25f
-            val rect = RectF(w / 2 - radius, h / 2 - radius, w / 2 + radius, h / 2 + radius)
-
-            canvas.drawArc(rect, 135f, 270f, false, bgPaint)
-            canvas.drawArc(rect, 135f, 200f, false, progressPaint)
-
-            canvas.drawText(formattedText, w / 2, h / 2 + 12f, textPaint)
-        }
-    }
+    data class AppInfo(
+        val name: String,
+        val icon: Drawable?,
+        val bytes: Long
+    )
 }
