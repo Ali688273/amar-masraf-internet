@@ -44,4 +44,8 @@ dependencies {
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0'
+
+    // لود فایل AAR دانلود شده توسط گیت‌هاب اکشنز
+    implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'])
+    implementation 'com.google.android.gms:play-services-ads-identifier:18.0.1'
 }
