@@ -165,13 +165,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun initTapsellBanner() {
         TapsellPlus.initialize(this, TAPSELL_APP_KEY, object : ir.tapsell.plus.TapsellPlusInitListener {
-            override fun onInitializeSuccess(adNetworks: List<String>) {
+            override fun onInitializeSuccess(adNetworks: List<String>?) {
                 Log.d("Tapsell", "Tapsell initialized successfully")
                 requestStandardBanner()
             }
 
-            override fun onError(error: AdNetworkError) {
-                Log.e("Tapsell", "Initialization Error: ${error.errorMessage}")
+            override fun onError(error: AdNetworkError?) {
+                Log.e("Tapsell", "Initialization Error: ${error?.errorMessage}")
             }
         })
     }
@@ -181,15 +181,17 @@ class MainActivity : AppCompatActivity() {
             this,
             TAPSELL_ZONE_ID,
             TapsellPlusBannerType.BANNER_320x50,
-            object : ir.tapsell.plus.Listener() {
+            object : ir.tapsell.plus.AdRequestCallback() {
                 override fun response(tapsellPlusAdModel: TapsellPlusAdModel) {
                     TapsellPlus.showStandardBannerAd(
                         this@MainActivity,
                         tapsellPlusAdModel.responseId,
                         adContainer,
-                        object : ir.tapsell.plus.Listener() {
-                            override fun response(tapsellPlusAdModel: TapsellPlusAdModel) {}
-                            override fun error(tapsellPlusErrorModel: TapsellPlusErrorModel) {}
+                        object : ir.tapsell.plus.AdShowListener() {
+                            override fun onOpened(tapsellPlusAdModel: TapsellPlusAdModel?) {}
+                            override fun onError(tapsellPlusErrorModel: TapsellPlusErrorModel?) {
+                                Log.e("Tapsell", "Banner Show Error: ${tapsellPlusErrorModel?.errorMessage}")
+                            }
                         }
                     )
                 }
