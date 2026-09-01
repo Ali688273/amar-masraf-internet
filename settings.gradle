@@ -10,8 +10,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // مخزن اختصاصی تپسل
-        maven { url 'https://storage.tapsell.ir/sdk/maven' }
+        // مخزن جایگزین و بدون تحریم تپسل
+        maven { url 'https://jitpack.io' }
     }
 }
 
