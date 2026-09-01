@@ -21,11 +21,8 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-
-      # ایجاد پوشه libs بدون نیاز به شبکه یا اتصال به تپسل
-      - name: Create Local Libs Directory
-        run: |
-          mkdir -p app/libs
+        with:
+          gradle-version: '8.5'
 
       - name: Generate Release Keystore
         run: |
@@ -41,7 +38,11 @@ jobs:
 
       - name: Build Signed Release APK
         run: |
-          gradle assembleRelease \
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/release.keystore \
+            -Pandroid.injected.signing.store.password=android \
+            -Pandroid.injected.signing.key.alias=my-key-alias \
+            -Pandroid.injected.signing.key.password=android || gradle assembleRelease \
             -Pandroid.injected.signing.store.file=$(pwd)/release.keystore \
             -Pandroid.injected.signing.store.password=android \
             -Pandroid.injected.signing.key.alias=my-key-alias \
