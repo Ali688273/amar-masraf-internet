@@ -5,6 +5,10 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+# اعطای مجوز برای ساخت Release و آپلود APK
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
