@@ -165,13 +165,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun initTapsellBanner() {
         TapsellPlus.initialize(this, TAPSELL_APP_KEY, object : ir.tapsell.plus.TapsellPlusInitListener {
-            override fun onInitializeSuccess(p0: Any?) {
+            override fun onInitializeSuccess(adNetworks: Any) {
                 Log.d("Tapsell", "Tapsell initialized successfully")
                 requestStandardBanner()
             }
 
-            override fun onInitializeFailed(p0: Any?, p1: AdNetworkError?) {
-                Log.e("Tapsell", "Initialization Error: ${p1?.errorMessage}")
+            override fun onInitializationFailed(adNetworks: Any, error: AdNetworkError) {
+                Log.e("Tapsell", "Initialization Error: ${error.errorMessage}")
             }
         })
     }
@@ -196,7 +196,7 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
 
-                override fun onError(tapsellPlusErrorModel: TapsellPlusErrorModel) {
+                override fun error(tapsellPlusErrorModel: TapsellPlusErrorModel) {
                     Log.e("Tapsell", "Banner Request Error: ${tapsellPlusErrorModel.errorMessage}")
                 }
             }
