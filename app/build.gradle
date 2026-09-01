@@ -45,7 +45,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0'
 
-    // تبلیغات تپسل پلاس و خدمات شناسه تبلیغاتی
-    implementation 'ir.tapsell.plus:tapsell-plus-sdk:2.2.0'
+    // نسخه سازگار تپسل با سرورهای خارجی گیت‌هاب
+    implementation 'com.github.tapsell:tapsell-plus-sdk-android:2.1.8'
     implementation 'com.google.android.gms:play-services-ads-identifier:18.0.1'
 }
