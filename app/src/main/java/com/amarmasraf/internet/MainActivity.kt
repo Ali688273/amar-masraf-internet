@@ -143,7 +143,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initTapsell() {
-        // دور زدن ارور اینالایز برای بیلد موفق
         loadBannerAd()
     }
 
@@ -165,10 +164,6 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                     )
-                }
-
-                override fun onError(error: TapsellPlusErrorModel) {
-                    Log.e("TapsellRequest", "Error: ${error.errorMessage}")
                 }
             }
         )
