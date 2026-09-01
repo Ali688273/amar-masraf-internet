@@ -20,14 +20,24 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Process
 import android.provider.Settings
+import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import ir.tapsell.plus.Listener
+import ir.tapsell.plus.TapsellPlus
+import ir.tapsell.plus.TapsellPlusBannerType
+import ir.tapsell.plus.TapsellPlusInitListener
+import ir.tapsell.plus.model.AdNetworkError
+import ir.tapsell.plus.model.AdNetworks
+import ir.tapsell.plus.model.TapsellPlusAdModel
+import ir.tapsell.plus.model.TapsellPlusErrorModel
 import java.util.Calendar
 
 data class AppUsageInfo(
@@ -52,6 +62,10 @@ class MainActivity : AppCompatActivity() {
     private var lastTxBytes: Long = 0
     private var lastTime: Long = 0
     private val handler = Handler(Looper.getMainLooper())
+
+    // کلیدها و شناسه‌های تپسل
+    private val TAPSELL_APP_KEY = "aanbcpksderreqsnknjnookaelpsgibjbrjbcfsicndoqmkimibmncsnfqrrbkccaiqnjb"
+    private val TAPSELL_ZONE_ID = "6a86ecdaf056d371d5ba541"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -142,6 +156,46 @@ class MainActivity : AppCompatActivity() {
         setContentView(rootLayout)
 
         startSpeedMonitor()
+
+        // راه‌اندازی تبلیغات تپسل
+        initTapsellBanner()
+    }
+
+    private fun initTapsellBanner() {
+        TapsellPlus.initialize(this, TAPSELL_APP_KEY, object : TapsellPlusInitListener {
+            override fun onInitializeSuccess(adNetworks: AdNetworks) {
+                Log.d("TapsellAd", "تپسل فعال شد، در حال دریافت بنر...")
+                requestStandardBanner()
+            }
+
+            override fun onError(adNetworkError: AdNetworkError) {
+                Log.e("TapsellAd", "خطا در راه‌اندازی تپسل: ${adNetworkError.errorMessage}")
+            }
+        })
+    }
+
+    private fun requestStandardBanner() {
+        TapsellPlus.requestStandardBannerAd(
+            this,
+            TAPSELL_ZONE_ID,
+            TapsellPlusBannerType.BANNER_320x50,
+            object : Listener() {
+                override fun response(tapsellPlusAdModel: TapsellPlusAdModel) {
+                    super.response(tapsellPlusAdModel)
+                    val rootView = findViewById<ViewGroup>(android.R.id.content)
+                    TapsellPlus.showStandardBannerAd(
+                        this@MainActivity,
+                        tapsellPlusAdModel.zoneId,
+                        rootView
+                    )
+                }
+
+                override fun error(tapsellPlusErrorModel: TapsellPlusErrorModel) {
+                    super.error(tapsellPlusErrorModel)
+                    Log.e("TapsellAd", "خطا در دریافت بنر: ${tapsellPlusErrorModel.errorMessage}")
+                }
+            }
+        )
     }
 
     private fun refreshDashboard() {
