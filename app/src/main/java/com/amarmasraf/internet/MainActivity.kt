@@ -23,19 +23,16 @@ import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
-import ir.tapsell.plus.Listener
 import ir.tapsell.plus.TapsellPlus
 import ir.tapsell.plus.TapsellPlusBannerType
-import ir.tapsell.plus.TapsellPlusInitListener
 import ir.tapsell.plus.model.AdNetworkError
-import ir.tapsell.plus.model.AdNetworks
 import ir.tapsell.plus.model.TapsellPlusAdModel
 import ir.tapsell.plus.model.TapsellPlusErrorModel
 import java.util.Calendar
@@ -51,9 +48,13 @@ enum class TimePeriod { TODAY, WEEK, MONTH }
 
 class MainActivity : AppCompatActivity() {
 
+    private val TAPSELL_APP_KEY = "skdkrkqgpljebkgtnhnksnjsogjohskdglotogpbbkgdrqscslsbfshkgnbfdgrdglkffr"
+    private val TAPSELL_ZONE_ID = "66f7f24c084f7063d8091d37"
+
     private lateinit var speedDownloadTv: TextView
     private lateinit var speedUploadTv: TextView
     private lateinit var dynamicContainer: LinearLayout
+    private lateinit var adContainer: FrameLayout
 
     private var selectedNetwork = NetworkType.MOBILE
     private var selectedPeriod = TimePeriod.TODAY
@@ -62,10 +63,6 @@ class MainActivity : AppCompatActivity() {
     private var lastTxBytes: Long = 0
     private var lastTime: Long = 0
     private val handler = Handler(Looper.getMainLooper())
-
-    // کلیدها و شناسه‌های تپسل
-    private val TAPSELL_APP_KEY = "aanbcpksderreqsnknjnookaelpsgibjbrjbcfsicndoqmkimibmncsnfqrrbkccaiqnjb"
-    private val TAPSELL_ZONE_ID = "6a86ecdaf056d371d5ba541"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -151,25 +148,32 @@ class MainActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
             addView(mainLayout)
         }
-
         rootLayout.addView(scrollView)
+
+        // کانتینر تبلیغات بنری پایین
+        adContainer = FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        rootLayout.addView(adContainer)
+
         setContentView(rootLayout)
 
         startSpeedMonitor()
-
-        // راه‌اندازی تبلیغات تپسل
         initTapsellBanner()
     }
 
     private fun initTapsellBanner() {
-        TapsellPlus.initialize(this, TAPSELL_APP_KEY, object : TapsellPlusInitListener {
-            override fun onInitializeSuccess(adNetworks: AdNetworks) {
-                Log.d("TapsellAd", "تپسل فعال شد، در حال دریافت بنر...")
+        TapsellPlus.initialize(this, TAPSELL_APP_KEY, object : ir.tapsell.plus.TapsellPlusInitListener {
+            override fun onInitializeSuccess(adNetworks: List<String>) {
+                Log.d("Tapsell", "Tapsell initialized successfully")
                 requestStandardBanner()
             }
 
-            override fun onError(adNetworkError: AdNetworkError) {
-                Log.e("TapsellAd", "خطا در راه‌اندازی تپسل: ${adNetworkError.errorMessage}")
+            override fun onError(error: AdNetworkError) {
+                Log.e("Tapsell", "Initialization Error: ${error.errorMessage}")
             }
         })
     }
@@ -179,20 +183,21 @@ class MainActivity : AppCompatActivity() {
             this,
             TAPSELL_ZONE_ID,
             TapsellPlusBannerType.BANNER_320x50,
-            object : Listener() {
+            object : ir.tapsell.plus.Listener() {
                 override fun response(tapsellPlusAdModel: TapsellPlusAdModel) {
-                    super.response(tapsellPlusAdModel)
-                    val rootView = findViewById<ViewGroup>(android.R.id.content)
                     TapsellPlus.showStandardBannerAd(
                         this@MainActivity,
-                        tapsellPlusAdModel.zoneId,
-                        rootView
+                        tapsellPlusAdModel.responseId,
+                        adContainer,
+                        object : ir.tapsell.plus.Listener() {
+                            override fun response(tapsellPlusAdModel: TapsellPlusAdModel) {}
+                            override fun error(tapsellPlusErrorModel: TapsellPlusErrorModel) {}
+                        }
                     )
                 }
 
                 override fun error(tapsellPlusErrorModel: TapsellPlusErrorModel) {
-                    super.error(tapsellPlusErrorModel)
-                    Log.e("TapsellAd", "خطا در دریافت بنر: ${tapsellPlusErrorModel.errorMessage}")
+                    Log.e("Tapsell", "Banner Request Error: ${tapsellPlusErrorModel.errorMessage}")
                 }
             }
         )
@@ -203,7 +208,6 @@ class MainActivity : AppCompatActivity() {
         val cardBgColor = Color.parseColor("#1E293B")
         val statsManager = getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
 
-        // تب‌های انتخاب نوع شبکه (فقط سیم‌کارت و وای‌فای)
         val networkTabs = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, 10, 0, 15)
@@ -219,7 +223,6 @@ class MainActivity : AppCompatActivity() {
         })
         dynamicContainer.addView(networkTabs)
 
-        // تب‌های بازه زمانی
         val periodTabs = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, 0, 0, 25)
@@ -244,7 +247,6 @@ class MainActivity : AppCompatActivity() {
 
         val totalBytes = getNetworkBytes(statsManager, netTypeInt, startTime, endTime)
 
-        // کارت نمودار
         val chartCard = CardView(this).apply {
             radius = 28f
             setCardBackgroundColor(cardBgColor)
@@ -284,15 +286,12 @@ class MainActivity : AppCompatActivity() {
         chartCard.addView(chartLayout)
         dynamicContainer.addView(chartCard)
 
-        // کارت جدول مقایسه‌ای
         dynamicContainer.addView(createComparisonCard(statsManager, netTypeInt))
 
-        // کارت پیش‌بینی مصرف
         if (selectedPeriod == TimePeriod.MONTH) {
             dynamicContainer.addView(createPredictionCard(totalBytes))
         }
 
-        // لیست برنامه‌ها
         val appListTitle = TextView(this).apply {
             text = "📱 مصرف برنامه‌ها در این بازه"
             textSize = 15f
