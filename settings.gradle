@@ -10,8 +10,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // مخزن جایگزین و بدون تحریم تپسل
-        maven { url 'https://jitpack.io' }
     }
 }
 
