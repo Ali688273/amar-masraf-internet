@@ -10,8 +10,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://mvn.tapsell.ir/release' }
     }
 }
-
-rootProject.name = "amar-masraf-internet"
+rootProject.name = "AmarMasraf"
 include ':app'
