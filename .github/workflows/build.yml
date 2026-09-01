@@ -21,14 +21,11 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: current
 
-      # دانلود خودکار SDK تپسل مستقیم در پوشه app/libs
-      - name: Download Tapsell AAR
+      # ایجاد پوشه libs بدون نیاز به شبکه یا اتصال به تپسل
+      - name: Create Local Libs Directory
         run: |
           mkdir -p app/libs
-          curl -L -o app/libs/tapsell-plus-sdk.aar https://storage.tapsell.ir/sdk/maven/ir/tapsell/plus/tapsell-plus-sdk/2.2.0/tapsell-plus-sdk-2.2.0.aar || true
 
       - name: Generate Release Keystore
         run: |
