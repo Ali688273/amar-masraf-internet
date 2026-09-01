@@ -78,7 +78,6 @@ class MainActivity : AppCompatActivity() {
             setPadding(30, 40, 30, 40)
         }
 
-        // هدر برنامه
         val headerLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -150,7 +149,6 @@ class MainActivity : AppCompatActivity() {
         }
         rootLayout.addView(scrollView)
 
-        // کانتینر تبلیغات بنری پایین
         adContainer = FrameLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
