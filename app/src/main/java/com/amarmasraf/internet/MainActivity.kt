@@ -145,16 +145,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initTapsell() {
-        TapsellPlus.initialize(this, TapsellKey, object : TapsellPlusInitListener() {
-            override fun onInitializeSuccess(adNetworks: String) {
+        TapsellPlus.initialize(this, TapsellKey, 
+            { adNetworks ->
                 Log.d("TapsellInit", "Initialized successfully")
                 loadBannerAd()
+            },
+            { error ->
+                Log.e("TapsellInit", "Failed: ${error?.errorMessage}")
             }
-
-            override fun onInitializationFailed(adNetworks: String, error: AdNetworkError) {
-                Log.e("TapsellInit", "Failed: ${error.errorMessage}")
-            }
-        })
+        )
     }
 
     private fun loadBannerAd() {
