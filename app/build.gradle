@@ -3,6 +3,12 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://mvn.tapsell.ir/release' }
+}
+
 android {
     namespace 'com.amarmasraf.internet'
     compileSdk 34
@@ -46,4 +52,7 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0'
 
     implementation 'com.google.android.gms:play-services-ads-identifier:18.0.1'
+
+    // کتابخانه تپسل پلاس
+    implementation 'ir.tapsell.plus:tapsell-plus-sdk-android:2.2.0'
 }
