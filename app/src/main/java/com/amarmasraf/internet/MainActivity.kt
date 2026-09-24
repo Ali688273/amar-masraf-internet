@@ -25,6 +25,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import ir.tapsell.plus.TapsellPlus
@@ -215,6 +216,16 @@ class MainActivity : AppCompatActivity() {
         // Total Usage Card
         val totalBytes = queryNetworkTotal(statsManager, netType, start, end)
         contentLayout.addView(createTotalUsageCard(totalBytes))
+        contentLayout.addView(createTrafficBreakdownCard(statsManager, netType, start, end))
+        if (currentPeriod != 0) contentLayout.addView(createDailyHistoryCard(statsManager, netType, currentPeriod))
+
+        val refreshButton = Button(this).apply {
+            text = "↻ بروزرسانی آمار"
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#334155"))
+            setOnClickListener { refreshUI() }
+        }
+        contentLayout.addView(refreshButton)
 
         // App List Title
         val listTitle = TextView(this).apply {
@@ -336,6 +347,128 @@ class MainActivity : AppCompatActivity() {
         layout.addView(value)
         card.addView(layout)
         return card
+    }
+
+
+    private fun createTrafficBreakdownCard(statsManager: NetworkStatsManager, netType: Int, start: Long, end: Long): CardView {
+        val card = CardView(this).apply {
+            radius = 20f
+            setCardBackgroundColor(Color.parseColor("#1E293B"))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                setMargins(0, 0, 0, 20)
+            }
+        }
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(20, 20, 20, 20)
+        }
+        val rx = queryNetworkDirection(statsManager, netType, start, end, true)
+        val tx = queryNetworkDirection(statsManager, netType, start, end, false)
+        layout.addView(makeTrafficBox("دانلود", formatBytes(rx), "#10B981"))
+        layout.addView(makeTrafficBox("آپلود", formatBytes(tx), "#3B82F6"))
+        card.addView(layout)
+        return card
+    }
+
+    private fun makeTrafficBox(title: String, value: String, color: String): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            val t = TextView(context).apply {
+                text = title
+                textSize = 12f
+                setTextColor(Color.parseColor("#94A3B8"))
+                gravity = Gravity.CENTER
+            }
+            val v = TextView(context).apply {
+                text = value
+                textSize = 16f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(Color.parseColor(color))
+                gravity = Gravity.CENTER
+                setPadding(0, 8, 0, 0)
+            }
+            addView(t)
+            addView(v)
+        }
+    }
+
+    private fun createDailyHistoryCard(statsManager: NetworkStatsManager, netType: Int, period: Int): CardView {
+        val card = CardView(this).apply {
+            radius = 20f
+            setCardBackgroundColor(Color.parseColor("#1E293B"))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                setMargins(0, 0, 0, 20)
+            }
+        }
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(20, 20, 20, 20)
+        }
+        layout.addView(TextView(this).apply {
+            text = if (period == 1) "گزارش روزانه ۷ روز اخیر" else "گزارش روزانه"
+            textSize = 15f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(Color.WHITE)
+            setPadding(0, 0, 0, 12)
+        })
+        val days = if (period == 1) 7 else 30
+        for (day in minOf(days, 7) downTo 1) {
+            val (s, e) = dayRange(day)
+            val bytes = queryNetworkTotal(statsManager, netType, s, e)
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(0, 5, 0, 5)
+            }
+            row.addView(TextView(this).apply {
+                text = if (day == 1) "امروز" else "$day روز پیش"
+                textSize = 11f
+                setTextColor(Color.parseColor("#CBD5E1"))
+                layoutParams = LinearLayout.LayoutParams(75, LinearLayout.LayoutParams.WRAP_CONTENT)
+            })
+            row.addView(TextView(this).apply {
+                text = "●"
+                textSize = 18f
+                setTextColor(Color.parseColor("#38BDF8"))
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            })
+            row.addView(TextView(this).apply {
+                text = formatBytes(bytes)
+                textSize = 10f
+                setTextColor(Color.parseColor("#94A3B8"))
+            })
+            layout.addView(row)
+        }
+        card.addView(layout)
+        return card
+    }
+
+    private fun dayRange(daysAgo: Int): Pair<Long, Long> {
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_YEAR, -(daysAgo - 1))
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return Pair(cal.timeInMillis, cal.timeInMillis + 86400000L)
+    }
+
+    private fun queryNetworkDirection(statsManager: NetworkStatsManager, netType: Int, start: Long, end: Long, download: Boolean): Long {
+        var total = 0L
+        try {
+            val stats = statsManager.querySummary(netType, null, start, end)
+            val bucket = NetworkStats.Bucket()
+            while (stats.hasNextBucket()) {
+                stats.getNextBucket(bucket)
+                total += if (download) bucket.rxBytes else bucket.txBytes
+            }
+            stats.close()
+        } catch (e: Exception) {
+            Log.e("NetworkStats", "Direction query failed", e)
+        }
+        return total
     }
 
     private fun createAppItemRow(app: AppInfo): CardView {
