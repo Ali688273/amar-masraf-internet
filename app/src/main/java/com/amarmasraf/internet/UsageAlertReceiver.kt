@@ -10,41 +10,35 @@ import android.net.ConnectivityManager
 import androidx.core.app.NotificationCompat
 import java.util.Calendar
 
-class UsageAlertReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent?) {
-        val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-        if (!prefs.getBoolean("notifications", true)) return
-        val limitGb = prefs.getFloat("monthly_limit_gb", 10f)
-        val warning = prefs.getInt("warning_percent", 80)
-        val manager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
-        val (start, end) = monthRange()
-        val total = query(manager, ConnectivityManager.TYPE_MOBILE, start, end) + query(manager, ConnectivityManager.TYPE_WIFI, start, end)
-        val percent = total.toDouble() / (limitGb * 1024.0 * 1024.0 * 1024.0) * 100.0
-        if (percent >= warning) {
-            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val text = "مصرف این ماه ${format(total)} است؛ حدود ${percent.toInt()}٪ از سقف ${limitGb.toInt()} گیگابایت."
-            val notification = NotificationCompat.Builder(context, "usage_alerts")
-                .setSmallIcon(android.R.drawable.stat_notify_sync_noanim)
-                .setContentTitle("هشدار مصرف اینترنت")
-                .setContentText(text)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-                .setAutoCancel(true).build()
-            nm.notify(7002, notification)
-        }
-    }
-    private fun monthRange(): Pair<Long, Long> {
-        val cal = Calendar.getInstance(); val end = cal.timeInMillis
-        cal.set(Calendar.DAY_OF_MONTH, 1); cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
-        return Pair(cal.timeInMillis, end)
-    }
-    private fun query(manager: NetworkStatsManager, type: Int, start: Long, end: Long): Long {
-        return try {
-            val stats = manager.querySummary(type, null, start, end); val bucket = NetworkStats.Bucket(); var total = 0L
-            while (stats.hasNextBucket()) { stats.getNextBucket(bucket); total += bucket.rxBytes + bucket.txBytes }; stats.close(); total
-        } catch (_: Exception) { 0L }
-    }
-    private fun format(bytes: Long): String {
-        val gb = bytes / 1024.0 / 1024.0 / 1024.0
-        return if (gb >= 1) String.format("%.2f GB", gb) else String.format("%.0f MB", bytes / 1024.0 / 1024.0)
-    }
+class UsageAlertReceiver:BroadcastReceiver(){
+ override fun onReceive(c:Context,i:Intent?){
+  val p=c.getSharedPreferences("settings",Context.MODE_PRIVATE)
+  if(!p.getBoolean("notifications",true))return
+  val nm=c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+  val month=UsageFeatureUtils.billingPeriod(c)
+  val total=UsageFeatureUtils.totalMobileWifi(c,month)
+  val limit=p.getFloat("monthly_limit_gb",10f).toDouble()*1024*1024*1024
+  val warning=p.getInt("warning_percent",80)
+  val percent=if(limit>0)total/limit*100 else 0.0
+  if(percent>=warning)notify(c,nm,7002,"هشدار سقف مصرف","مصرف چرخه قبض "+format(total)+" است؛ "+percent.toInt()+"٪ از سقف تعیین‌شده.")
+  val budget=p.getInt("daily_budget_mb",500).toLong()*1024*1024
+  val today=UsageFeatureUtils.totalMobileWifi(c,UsageFeatureUtils.today())
+  if(today>=budget)notify(c,nm,7003,"هشدار بودجه روزانه","مصرف امروز "+format(today)+" از بودجه "+format(budget)+" عبور کرده است.")
+  val avg=sevenDayAverage(c)
+  val mult=p.getFloat("anomaly_multiplier",2f)
+  if(avg>0&&today>avg*mult)notify(c,nm,7004,"مصرف غیرعادی","مصرف امروز بیش از "+mult+" برابر میانگین ۷ روز اخیر است.")
+ }
+ private fun sevenDayAverage(c:Context):Double{
+  var sum=0L
+  for(i in 1..7){
+   val s=Calendar.getInstance().apply{add(Calendar.DAY_OF_YEAR,-i);set(Calendar.HOUR_OF_DAY,0);set(Calendar.MINUTE,0);set(Calendar.SECOND,0);set(Calendar.MILLISECOND,0)}
+   val e=(s.clone() as Calendar).apply{add(Calendar.DAY_OF_YEAR,1)}
+   sum+=UsageFeatureUtils.totalMobileWifi(c,UsageFeatureUtils.Period(s.timeInMillis,e.timeInMillis))
+  }
+  return sum/7.0
+ }
+ private fun notify(c:Context,nm:NotificationManager,id:Int,title:String,text:String){
+  nm.notify(id,NotificationCompat.Builder(c,"usage_alerts").setSmallIcon(android.R.drawable.stat_notify_sync_noanim).setContentTitle(title).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text)).setAutoCancel(true).build())
+ }
+ private fun format(b:Long):String{val gb=b/1024.0/1024.0/1024.0;return if(gb>=1)String.format("%.2f GB",gb)else String.format("%.0f MB",b/1024.0/1024.0)}
 }
