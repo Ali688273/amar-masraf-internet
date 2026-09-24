@@ -23,6 +23,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
 
+        <activity android:name=".ChartsActivity" android:exported="false" />
+
         <receiver
             android:name=".UsageAlertReceiver"
             android:exported="false" />
