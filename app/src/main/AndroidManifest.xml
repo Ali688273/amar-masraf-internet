@@ -12,6 +12,8 @@
 
     <!-- مجوز مشاهده تمام برنامه‌های نصب‌شده روی دستگاه -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -20,6 +22,10 @@
         android:label="آمار مصرف اینترنت"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
+
+        <receiver
+            android:name=".UsageAlertReceiver"
+            android:exported="false" />
 
         <activity
             android:name=".MainActivity"
