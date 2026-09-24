@@ -230,6 +230,7 @@ class MainActivity : AppCompatActivity() {
         // Total Usage Card
         val totalBytes = queryNetworkTotal(statsManager, netType, start, end)
         contentLayout.addView(createTotalUsageCard(totalBytes))
+        contentLayout.addView(createChartsButton())
         contentLayout.addView(createComparisonCard(statsManager, netType))
         contentLayout.addView(createSettingsCard())
         contentLayout.addView(createTrafficBreakdownCard(statsManager, netType, start, end))
@@ -267,6 +268,24 @@ class MainActivity : AppCompatActivity() {
             for (app in appList) {
                 contentLayout.addView(createAppItemRow(app))
             }
+        }
+    }
+
+
+    private fun createChartsButton(): CardView {
+        return CardView(this).apply {
+            radius = 20f
+            setCardBackgroundColor(Color.parseColor("#4F46E5"))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
+            setOnClickListener { startActivity(Intent(this@MainActivity, ChartsActivity::class.java)) }
+            addView(TextView(context).apply {
+                text = "📊 نمودار و مقایسه روزانه / ماهانه / سالانه"
+                textSize = 15f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(Color.WHITE)
+                gravity = Gravity.CENTER
+                setPadding(18, 20, 18, 20)
+            })
         }
     }
 
@@ -727,8 +746,9 @@ class MainActivity : AppCompatActivity() {
                 val appInfo = pm.getApplicationInfo(pkg, 0)
                 val name = pm.getApplicationLabel(appInfo).toString()
                 val icon = pm.getApplicationIcon(appInfo)
-                val rx = queryAppDirection(statsManager, netType, start, end, uid, true)
-                val tx = queryAppDirection(statsManager, netType, start, end, uid, false)
+                val appUid = pm.getApplicationInfo(pkg, 0).uid
+                val rx = queryAppDirection(statsManager, netType, start, end, appUid, true)
+                val tx = queryAppDirection(statsManager, netType, start, end, appUid, false)
                 list.add(AppInfo(name, icon, bytes, rx, tx))
             } catch (e: Exception) {
                 continue
