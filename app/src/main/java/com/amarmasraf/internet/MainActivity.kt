@@ -1,6 +1,10 @@
 package com.amarmasraf.internet
 
+import android.app.AlarmManager
 import android.app.AppOpsManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.usage.NetworkStats
 import android.app.usage.NetworkStatsManager
 import android.content.Context
@@ -26,6 +30,8 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Button
+import android.widget.EditText
+import android.widget.Switch
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import ir.tapsell.plus.TapsellPlus
@@ -35,6 +41,7 @@ import ir.tapsell.plus.AdShowListener
 import ir.tapsell.plus.model.TapsellPlusAdModel
 import ir.tapsell.plus.model.TapsellPlusErrorModel
 import java.util.Calendar
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -53,6 +60,9 @@ class MainActivity : AppCompatActivity() {
     private var lastTx: Long = 0
     private var lastTime: Long = 0
     private val speedHandler = Handler(Looper.getMainLooper())
+    private val prefs by lazy { getSharedPreferences("settings", Context.MODE_PRIVATE) }
+    private val warningPercent get() = prefs.getInt("warning_percent", 80)
+    private val monthlyLimitGb get() = prefs.getFloat("monthly_limit_gb", 10f)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -139,6 +149,8 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(rootLayout)
 
+        createNotificationChannel()
+        scheduleDailyCheck()
         startSpeedChecker()
         initTapsell()
     }
@@ -216,6 +228,8 @@ class MainActivity : AppCompatActivity() {
         // Total Usage Card
         val totalBytes = queryNetworkTotal(statsManager, netType, start, end)
         contentLayout.addView(createTotalUsageCard(totalBytes))
+        contentLayout.addView(createComparisonCard(statsManager, netType))
+        contentLayout.addView(createSettingsCard())
         contentLayout.addView(createTrafficBreakdownCard(statsManager, netType, start, end))
         if (currentPeriod != 0) contentLayout.addView(createDailyHistoryCard(statsManager, netType, currentPeriod))
 
@@ -229,7 +243,7 @@ class MainActivity : AppCompatActivity() {
 
         // App List Title
         val listTitle = TextView(this).apply {
-            text = "مصرف اینترنت برنامه‌ها"
+            text = "مصرف اینترنت برنامه‌ها (دانلود / آپلود)"
             textSize = 16f
             setTextColor(Color.WHITE)
             typeface = Typeface.DEFAULT_BOLD
@@ -471,6 +485,88 @@ class MainActivity : AppCompatActivity() {
         return total
     }
 
+    private fun createComparisonCard(statsManager: NetworkStatsManager, netType: Int): CardView {
+        val card = CardView(this).apply {
+            radius = 20f
+            setCardBackgroundColor(Color.parseColor("#1E293B"))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
+        }
+        val today = queryNetworkTotal(statsManager, netType, getDayStart(0), System.currentTimeMillis())
+        val yesterday = queryNetworkTotal(statsManager, netType, getDayStart(1), getDayStart(0))
+        val change = if (yesterday > 0) ((today - yesterday).toDouble() / yesterday * 100.0) else 0.0
+        val text = if (yesterday == 0L) "برای دیروز داده کافی نیست" else String.format(Locale.US, "%.0f%% %s نسبت به دیروز", kotlin.math.abs(change), if (change >= 0) "بیشتر" else "کمتر")
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
+        layout.addView(TextView(this).apply { text = "مقایسه با دیروز"; textSize = 13f; setTextColor(Color.parseColor("#94A3B8")) })
+        layout.addView(TextView(this).apply { this.text = text; textSize = 16f; typeface = Typeface.DEFAULT_BOLD; setTextColor(Color.WHITE); setPadding(0, 8, 0, 0) })
+        layout.addView(TextView(this).apply { this.text = "امروز: ${formatBytes(today)}   |   دیروز: ${formatBytes(yesterday)}"; textSize = 11f; setTextColor(Color.parseColor("#38BDF8")); setPadding(0, 6, 0, 0) })
+        card.addView(layout)
+        return card
+    }
+
+    private fun createSettingsCard(): CardView {
+        val card = CardView(this).apply {
+            radius = 20f
+            setCardBackgroundColor(Color.parseColor("#1E293B"))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
+        }
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
+        layout.addView(TextView(this).apply { text = "⚙️ تنظیمات بسته اینترنت"; textSize = 15f; typeface = Typeface.DEFAULT_BOLD; setTextColor(Color.WHITE) })
+        val limit = EditText(this).apply { hint = "حجم ماهانه (گیگابایت)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL; setText(monthlyLimitGb.toString()); setTextColor(Color.WHITE); setHintTextColor(Color.parseColor("#64748B")) }
+        val percent = EditText(this).apply { hint = "درصد هشدار (مثلاً 80)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER; setText(warningPercent.toString()); setTextColor(Color.WHITE); setHintTextColor(Color.parseColor("#64748B")) }
+        layout.addView(limit); layout.addView(percent)
+        val notify = Switch(this).apply { text = "اعلان نزدیک‌شدن به سقف مصرف"; setTextColor(Color.WHITE); isChecked = prefs.getBoolean("notifications", true) }
+        layout.addView(notify)
+        val save = Button(this).apply {
+            text = "ذخیره تنظیمات"
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#2563EB"))
+            setOnClickListener {
+                val l = limit.text.toString().toFloatOrNull()?.coerceAtLeast(0.1f) ?: 10f
+                val p = percent.text.toString().toIntOrNull()?.coerceIn(1, 100) ?: 80
+                prefs.edit().putFloat("monthly_limit_gb", l).putInt("warning_percent", p).putBoolean("notifications", notify.isChecked).apply()
+                scheduleDailyCheck()
+                refreshUI()
+            }
+        }
+        layout.addView(save)
+        card.addView(layout)
+        return card
+    }
+
+    private fun getDayStart(daysAgo: Int): Long {
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_YEAR, -daysAgo)
+        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
+    }
+
+    private fun queryAppDirection(statsManager: NetworkStatsManager, netType: Int, start: Long, end: Long, uid: Int, download: Boolean): Long {
+        var total = 0L
+        try {
+            val stats = statsManager.queryDetailsForUid(netType, null, start, end, uid)
+            val bucket = NetworkStats.Bucket()
+            while (stats.hasNextBucket()) { stats.getNextBucket(bucket); total += if (download) bucket.rxBytes else bucket.txBytes }
+            stats.close()
+        } catch (_: Exception) {}
+        return total
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(NotificationChannel("usage_alerts", "هشدار مصرف اینترنت", NotificationManager.IMPORTANCE_DEFAULT))
+        }
+    }
+
+    private fun scheduleDailyCheck() {
+        if (!prefs.getBoolean("notifications", true)) return
+        val alarm = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, UsageAlertReceiver::class.java)
+        val pending = PendingIntent.getBroadcast(this, 7001, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val cal = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 21); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0); if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DAY_OF_YEAR, 1) }
+        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, cal.timeInMillis, AlarmManager.INTERVAL_DAY, pending)
+    }
+
     private fun createAppItemRow(app: AppInfo): CardView {
         val card = CardView(this).apply {
             radius = 16f
@@ -503,14 +599,22 @@ class MainActivity : AppCompatActivity() {
 
         val usageView = TextView(this).apply {
             text = formatBytes(app.bytes)
-            textSize = 13f
+            textSize = 12f
             setTextColor(Color.parseColor("#38BDF8"))
             typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.END
         }
+        val detailView = TextView(this).apply {
+            text = "↓ ${formatBytes(app.rxBytes)}   ↑ ${formatBytes(app.txBytes)}"
+            textSize = 9f
+            setTextColor(Color.parseColor("#94A3B8"))
+            gravity = Gravity.END
+        }
+        val usageLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.END; addView(usageView); addView(detailView) }
 
         layout.addView(iconView)
         layout.addView(nameView)
-        layout.addView(usageView)
+        layout.addView(usageLayout)
         card.addView(layout)
         return card
     }
@@ -621,7 +725,9 @@ class MainActivity : AppCompatActivity() {
                 val appInfo = pm.getApplicationInfo(pkg, 0)
                 val name = pm.getApplicationLabel(appInfo).toString()
                 val icon = pm.getApplicationIcon(appInfo)
-                list.add(AppInfo(name, icon, bytes))
+                val rx = queryAppDirection(statsManager, netType, start, end, uid, true)
+                val tx = queryAppDirection(statsManager, netType, start, end, uid, false)
+                list.add(AppInfo(name, icon, bytes, rx, tx))
             } catch (e: Exception) {
                 continue
             }
@@ -683,6 +789,8 @@ class MainActivity : AppCompatActivity() {
     data class AppInfo(
         val name: String,
         val icon: Drawable?,
-        val bytes: Long
+        val bytes: Long,
+        val rxBytes: Long,
+        val txBytes: Long
     )
 }
