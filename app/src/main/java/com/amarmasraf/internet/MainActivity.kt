@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
 
         val rootLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(ThemeManager.color(this, "background"))
+            setBackgroundColor(ThemeManager.color(this@MainActivity, "background"))
         }
 
         val scrollContainer = ScrollView(this).apply {
@@ -105,7 +105,7 @@ class MainActivity : AppCompatActivity() {
         val subTitleTv = TextView(this).apply {
             text = "مدیریت و پایش مصرف داده"
             textSize = 13f
-            setTextColor(ThemeManager.color(this, "muted"))
+            setTextColor(ThemeManager.color(this@MainActivity, "muted"))
             setPadding(0, 4, 0, 0)
         }
 
@@ -118,7 +118,7 @@ class MainActivity : AppCompatActivity() {
             val permissionNotice = TextView(this).apply {
                 text = "لطفاً دسترسی به آمار مصرف (Usage Access) را برای این برنامه فعال کنید."
                 textSize = 15f
-                setTextColor(ThemeManager.color(this, "danger"))
+                setTextColor(ThemeManager.color(this@MainActivity, "danger"))
                 gravity = Gravity.CENTER
                 setPadding(0, 50, 0, 50)
             }
@@ -260,7 +260,7 @@ class MainActivity : AppCompatActivity() {
         if (appList.isEmpty()) {
             val emptyTv = TextView(this).apply {
                 text = "داده‌ای برای این بازه زمانی یافت نشد."
-                setTextColor(ThemeManager.color(this, "muted"))
+                setTextColor(ThemeManager.color(this@MainActivity, "muted"))
                 gravity = Gravity.CENTER
                 setPadding(0, 40, 0, 40)
             }
@@ -276,7 +276,7 @@ class MainActivity : AppCompatActivity() {
     private fun createChartsButton(): CardView {
         return CardView(this).apply {
             radius = 20f
-            setCardBackgroundColor(ThemeManager.color(this, "primary"))
+            setCardBackgroundColor(ThemeManager.color(this@MainActivity, "primary"))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
             setOnClickListener { startActivity(Intent(this@MainActivity, ChartsActivity::class.java)) }
             addView(TextView(context).apply {
@@ -293,7 +293,7 @@ class MainActivity : AppCompatActivity() {
     private fun createSpeedCard(): CardView {
         val card = CardView(this).apply {
             radius = 24f
-            setCardBackgroundColor(ThemeManager.color(this, "card"))
+            setCardBackgroundColor(ThemeManager.color(this@MainActivity, "card"))
             val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             params.setMargins(0, 0, 0, 20)
             layoutParams = params
@@ -318,27 +318,27 @@ class MainActivity : AppCompatActivity() {
 
         val dlBox = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(ThemeManager.color(this, "background"))
+            setBackgroundColor(ThemeManager.color(this@MainActivity, "background"))
             setPadding(20, 15, 20, 15)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                 setMargins(0, 0, 8, 0)
             }
         }
-        val dlLabel = TextView(this).apply { text = "دانلود"; textSize = 11f; setTextColor(ThemeManager.color(this, "muted")) }
-        downloadSpeedTv = TextView(this).apply { text = "0.0 Mb/s"; textSize = 14f; setTextColor(ThemeManager.color(this, "download")); typeface = Typeface.DEFAULT_BOLD }
+        val dlLabel = TextView(this).apply { text = "دانلود"; textSize = 11f; setTextColor(ThemeManager.color(this@MainActivity, "muted")) }
+        downloadSpeedTv = TextView(this).apply { text = "0.0 Mb/s"; textSize = 14f; setTextColor(ThemeManager.color(this@MainActivity, "download")); typeface = Typeface.DEFAULT_BOLD }
         dlBox.addView(dlLabel)
         dlBox.addView(downloadSpeedTv)
 
         val ulBox = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(ThemeManager.color(this, "background"))
+            setBackgroundColor(ThemeManager.color(this@MainActivity, "background"))
             setPadding(20, 15, 20, 15)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                 setMargins(8, 0, 0, 0)
             }
         }
-        val ulLabel = TextView(this).apply { text = "آپلود"; textSize = 11f; setTextColor(ThemeManager.color(this, "muted")) }
-        uploadSpeedTv = TextView(this).apply { text = "0.0 Mb/s"; textSize = 14f; setTextColor(ThemeManager.color(this, "upload")); typeface = Typeface.DEFAULT_BOLD }
+        val ulLabel = TextView(this).apply { text = "آپلود"; textSize = 11f; setTextColor(ThemeManager.color(this@MainActivity, "muted")) }
+        uploadSpeedTv = TextView(this).apply { text = "0.0 Mb/s"; textSize = 14f; setTextColor(ThemeManager.color(this@MainActivity, "upload")); typeface = Typeface.DEFAULT_BOLD }
         ulBox.addView(ulLabel)
         ulBox.addView(uploadSpeedTv)
 
@@ -353,7 +353,7 @@ class MainActivity : AppCompatActivity() {
     private fun createTotalUsageCard(bytes: Long): CardView {
         val card = CardView(this).apply {
             radius = 24f
-            setCardBackgroundColor(ThemeManager.color(this, "card"))
+            setCardBackgroundColor(ThemeManager.color(this@MainActivity, "card"))
             val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             params.setMargins(0, 0, 0, 20)
             layoutParams = params
@@ -368,13 +368,13 @@ class MainActivity : AppCompatActivity() {
         val title = TextView(this).apply {
             text = "مجموع مصرف در این دوره"
             textSize = 13f
-            setTextColor(ThemeManager.color(this, "muted"))
+            setTextColor(ThemeManager.color(this@MainActivity, "muted"))
         }
 
         val value = TextView(this).apply {
             text = formatBytes(bytes)
             textSize = 24f
-            setTextColor(ThemeManager.color(this, "accent"))
+            setTextColor(ThemeManager.color(this@MainActivity, "accent"))
             typeface = Typeface.DEFAULT_BOLD
             setPadding(0, 10, 0, 0)
         }
@@ -389,7 +389,7 @@ class MainActivity : AppCompatActivity() {
     private fun createTrafficBreakdownCard(statsManager: NetworkStatsManager, netType: Int, start: Long, end: Long): CardView {
         val card = CardView(this).apply {
             radius = 20f
-            setCardBackgroundColor(ThemeManager.color(this, "card"))
+            setCardBackgroundColor(ThemeManager.color(this@MainActivity, "card"))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 setMargins(0, 0, 0, 20)
             }
@@ -414,7 +414,7 @@ class MainActivity : AppCompatActivity() {
             val t = TextView(context).apply {
                 text = title
                 textSize = 12f
-                setTextColor(ThemeManager.color(this, "muted"))
+                setTextColor(ThemeManager.color(this@MainActivity, "muted"))
                 gravity = Gravity.CENTER
             }
             val v = TextView(context).apply {
@@ -433,7 +433,7 @@ class MainActivity : AppCompatActivity() {
     private fun createDailyHistoryCard(statsManager: NetworkStatsManager, netType: Int, period: Int): CardView {
         val card = CardView(this).apply {
             radius = 20f
-            setCardBackgroundColor(ThemeManager.color(this, "card"))
+            setCardBackgroundColor(ThemeManager.color(this@MainActivity, "card"))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 setMargins(0, 0, 0, 20)
             }
@@ -461,19 +461,19 @@ class MainActivity : AppCompatActivity() {
             row.addView(TextView(this).apply {
                 text = if (day == 1) "امروز" else "$day روز پیش"
                 textSize = 11f
-                setTextColor(ThemeManager.color(this, "soft"))
+                setTextColor(ThemeManager.color(this@MainActivity, "soft"))
                 layoutParams = LinearLayout.LayoutParams(75, LinearLayout.LayoutParams.WRAP_CONTENT)
             })
             row.addView(TextView(this).apply {
                 text = "●"
                 textSize = 18f
-                setTextColor(ThemeManager.color(this, "accent"))
+                setTextColor(ThemeManager.color(this@MainActivity, "accent"))
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             })
             row.addView(TextView(this).apply {
                 text = formatBytes(bytes)
                 textSize = 10f
-                setTextColor(ThemeManager.color(this, "muted"))
+                setTextColor(ThemeManager.color(this@MainActivity, "muted"))
             })
             layout.addView(row)
         }
@@ -510,7 +510,7 @@ class MainActivity : AppCompatActivity() {
     private fun createComparisonCard(statsManager: NetworkStatsManager, netType: Int): CardView {
         val card = CardView(this).apply {
             radius = 20f
-            setCardBackgroundColor(ThemeManager.color(this, "card"))
+            setCardBackgroundColor(ThemeManager.color(this@MainActivity, "card"))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
         }
         val today = queryNetworkTotal(statsManager, netType, getDayStart(0), System.currentTimeMillis())
@@ -518,9 +518,9 @@ class MainActivity : AppCompatActivity() {
         val change = if (yesterday > 0) ((today - yesterday).toDouble() / yesterday * 100.0) else 0.0
         val text = if (yesterday == 0L) "برای دیروز داده کافی نیست" else String.format(Locale.US, "%.0f%% %s نسبت به دیروز", kotlin.math.abs(change), if (change >= 0) "بیشتر" else "کمتر")
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
-        layout.addView(TextView(this).apply { text = "مقایسه با دیروز"; textSize = 13f; setTextColor(ThemeManager.color(this, "muted")) })
+        layout.addView(TextView(this).apply { this.text = "مقایسه با دیروز"; textSize = 13f; setTextColor(ThemeManager.color(this@MainActivity, "muted")) })
         layout.addView(TextView(this).apply { this.text = text; textSize = 16f; typeface = Typeface.DEFAULT_BOLD; setTextColor(Color.WHITE); setPadding(0, 8, 0, 0) })
-        layout.addView(TextView(this).apply { this.text = "امروز: ${formatBytes(today)}   |   دیروز: ${formatBytes(yesterday)}"; textSize = 11f; setTextColor(ThemeManager.color(this, "accent")); setPadding(0, 6, 0, 0) })
+        layout.addView(TextView(this).apply { this.text = "امروز: ${formatBytes(today)}   |   دیروز: ${formatBytes(yesterday)}"; textSize = 11f; setTextColor(ThemeManager.color(this@MainActivity, "accent")); setPadding(0, 6, 0, 0) })
         card.addView(layout)
         return card
     }
@@ -528,7 +528,7 @@ class MainActivity : AppCompatActivity() {
     private fun createSettingsCard(): CardView {
         val card = CardView(this).apply {
             radius = 20f
-            setCardBackgroundColor(ThemeManager.color(this, "card"))
+            setCardBackgroundColor(ThemeManager.color(this@MainActivity, "card"))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
         }
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
@@ -540,15 +540,15 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener { showThemePicker() }
         }
         layout.addView(themeButton)
-        val limit = EditText(this).apply { hint = "حجم ماهانه (گیگابایت)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL; setText(monthlyLimitGb.toString()); setTextColor(Color.WHITE); setHintTextColor(ThemeManager.color(this, "muted")) }
-        val percent = EditText(this).apply { hint = "درصد هشدار (مثلاً 80)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER; setText(warningPercent.toString()); setTextColor(Color.WHITE); setHintTextColor(ThemeManager.color(this, "muted")) }
+        val limit = EditText(this).apply { hint = "حجم ماهانه (گیگابایت)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL; setText(monthlyLimitGb.toString()); setTextColor(Color.WHITE); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
+        val percent = EditText(this).apply { hint = "درصد هشدار (مثلاً 80)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER; setText(warningPercent.toString()); setTextColor(Color.WHITE); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
         layout.addView(limit); layout.addView(percent)
         val notify = Switch(this).apply { text = "اعلان نزدیک‌شدن به سقف مصرف"; setTextColor(Color.WHITE); isChecked = prefs.getBoolean("notifications", true) }
         layout.addView(notify)
         val save = Button(this).apply {
             text = "ذخیره تنظیمات"
             setTextColor(Color.WHITE)
-            setBackgroundColor(ThemeManager.color(this, "primary"))
+            setBackgroundColor(ThemeManager.color(this@MainActivity, "primary"))
             setOnClickListener {
                 val l = limit.text.toString().toFloatOrNull()?.coerceAtLeast(0.1f) ?: 10f
                 val p = percent.text.toString().toIntOrNull()?.coerceIn(1, 100) ?: 80
@@ -614,7 +614,7 @@ class MainActivity : AppCompatActivity() {
     private fun createAppItemRow(app: AppInfo): CardView {
         val card = CardView(this).apply {
             radius = 16f
-            setCardBackgroundColor(ThemeManager.color(this, "card"))
+            setCardBackgroundColor(ThemeManager.color(this@MainActivity, "card"))
             val params = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             params.setMargins(0, 0, 0, 12)
             layoutParams = params
@@ -644,14 +644,14 @@ class MainActivity : AppCompatActivity() {
         val usageView = TextView(this).apply {
             text = formatBytes(app.bytes)
             textSize = 12f
-            setTextColor(ThemeManager.color(this, "accent"))
+            setTextColor(ThemeManager.color(this@MainActivity, "accent"))
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.END
         }
         val detailView = TextView(this).apply {
             text = "↓ ${formatBytes(app.rxBytes)}   ↑ ${formatBytes(app.txBytes)}"
             textSize = 9f
-            setTextColor(ThemeManager.color(this, "muted"))
+            setTextColor(ThemeManager.color(this@MainActivity, "muted"))
             gravity = Gravity.END
         }
         val usageLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.END; addView(usageView); addView(detailView) }
@@ -666,7 +666,7 @@ class MainActivity : AppCompatActivity() {
     private fun createTabButton(title: String, isSelected: Boolean, onClick: () -> Unit): CardView {
         return CardView(this).apply {
             radius = 16f
-            setCardBackgroundColor(if (isSelected) ThemeManager.color(this, "primary") else ThemeManager.color(this, "card"))
+            setCardBackgroundColor(if (isSelected) ThemeManager.color(this@MainActivity, "primary") else ThemeManager.color(this@MainActivity, "card"))
             val params = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             params.setMargins(4, 0, 4, 0)
             layoutParams = params
@@ -687,7 +687,7 @@ class MainActivity : AppCompatActivity() {
     private fun createChipButton(title: String, isSelected: Boolean, onClick: () -> Unit): CardView {
         return CardView(this).apply {
             radius = 20f
-            setCardBackgroundColor(if (isSelected) ThemeManager.color(this, "upload") else ThemeManager.color(this, "background"))
+            setCardBackgroundColor(if (isSelected) ThemeManager.color(this@MainActivity, "upload") else ThemeManager.color(this@MainActivity, "background"))
             val params = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             params.setMargins(4, 0, 4, 0)
             layoutParams = params
@@ -696,7 +696,7 @@ class MainActivity : AppCompatActivity() {
             val tv = TextView(context).apply {
                 text = title
                 textSize = 12f
-                setTextColor(if (isSelected) Color.WHITE else ThemeManager.color(this, "muted"))
+                setTextColor(if (isSelected) Color.WHITE else ThemeManager.color(this@MainActivity, "muted"))
                 gravity = Gravity.CENTER
                 setPadding(10, 12, 10, 12)
             }
