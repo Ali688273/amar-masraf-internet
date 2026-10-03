@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.net.NetworkInterface
+import java.net.NetworkInterface
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
