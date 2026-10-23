@@ -177,7 +177,7 @@ class MainActivity : AppCompatActivity() {
         createNotificationChannel()
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 9001)
         scheduleDailyCheck()
-        startSpeedChecker()
+        if (::downloadSpeedTv.isInitialized && ::uploadSpeedTv.isInitialized) startSpeedChecker()
         initTapsell()
     }
 
