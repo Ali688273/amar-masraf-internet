@@ -14,7 +14,16 @@ class AppUsageActivity:AppCompatActivity(){
  data class Item(val name:String,val pkg:String,val bytes:Long,val rx:Long,val tx:Long)
  private lateinit var list:LinearLayout; private lateinit var search:EditText
  private var sort=0; private var networkMode=2; private var periodMode=0; private var searchQuery=""; private var all=emptyList<Item>()
- override fun onCreate(b:Bundle?){super.onCreate(b);build()}
+ private var permissionMissing=false
+ override fun onCreate(b:Bundle?){super.onCreate(b);if(UsageFeatureUtils.hasUsageAccess(this))build()else showPermissionScreen()}
+ override fun onResume(){super.onResume();if(permissionMissing&&UsageFeatureUtils.hasUsageAccess(this)){permissionMissing=false;build()}}
+ private fun showPermissionScreen(){
+  permissionMissing=true
+  val page=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER;setPadding(24,30,24,30);setBackgroundColor(ThemeManager.color(this@AppUsageActivity,"background"))}
+  page.addView(TextView(this).apply{text="برای نمایش مصرف هر برنامه، دسترسی «آمار مصرف» را در تنظیمات اندروید فعال کنید.";textSize=16f;gravity=android.view.Gravity.CENTER;setTextColor(ThemeManager.color(this@AppUsageActivity,"text"))})
+  page.addView(Button(this).apply{text="باز کردن تنظیمات دسترسی";setOnClickListener{startActivity(android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))}})
+  setContentView(page)
+ }
  private fun build(){
   val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,22,18,30);setBackgroundColor(ThemeManager.color(this@AppUsageActivity, "background"))}
   root.addView(TextView(this).apply{text="📱 مصرف برنامه‌ها";textSize=22f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(0,0,0,15)})
