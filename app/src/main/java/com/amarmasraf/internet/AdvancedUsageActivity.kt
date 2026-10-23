@@ -27,6 +27,12 @@ class AdvancedUsageActivity : AppCompatActivity() {
             text="⚙️ امکانات پیشرفته مصرف"; textSize=22f; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setPadding(0,0,0,15)
         })
 
+        if (!UsageFeatureUtils.hasUsageAccess(this)) {
+            root.addView(card("دسترسی لازم است", "برای محاسبه درست گزارش‌ها، دسترسی آمار مصرف را در تنظیمات اندروید فعال کنید.").apply {
+                setOnClickListener { startActivity(Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+            })
+        }
+
         root.addView(Button(this).apply {
             text = "🎨 انتخاب تم و رنگ کارت‌ها"
             setTextColor(android.graphics.Color.WHITE)
