@@ -14,7 +14,7 @@ class UsageBootReceiver : BroadcastReceiver() {
 
         val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
-        if (prefs.getBoolean("live_usage_enabled", false)) {
+        if (prefs.getBoolean("live_usage_enabled", false) && UsageFeatureUtils.hasUsageAccess(context)) {
             try {
                 ContextCompat.startForegroundService(
                     context,
