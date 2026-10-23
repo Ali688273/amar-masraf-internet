@@ -271,7 +271,7 @@ class MainActivity : AppCompatActivity() {
         // Total Usage Card
         val totalBytes = queryNetworkTotal(statsManager, netType, start, end)
         contentLayout.addView(createTotalUsageCard(totalBytes))
-        contentLayout.addView(createPackageOverviewCard(statsManager, netType))
+        contentLayout.addView(createPackageOverviewCard())
         contentLayout.addView(createChartsButton())
         contentLayout.addView(createComparisonCard(statsManager, netType))
         contentLayout.addView(createSettingsCard())
@@ -314,10 +314,10 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun createPackageOverviewCard(statsManager: NetworkStatsManager, netType: Int): CardView {
+    private fun createPackageOverviewCard(): CardView {
         val period = UsageFeatureUtils.billingPeriod(this)
         val now = System.currentTimeMillis()
-        val used = queryNetworkTotal(statsManager, netType, period.start, now)
+        val used = UsageFeatureUtils.totalMobileWifi(this, UsageFeatureUtils.Period(period.start, now))
         val limitBytes = (monthlyLimitGb.coerceAtLeast(0.1f) * 1024.0 * 1024.0 * 1024.0).toLong()
         val percent = if (limitBytes > 0L) (used.toDouble() * 100.0 / limitBytes).toInt() else 0
         val remaining = (limitBytes - used).coerceAtLeast(0L)
@@ -325,7 +325,7 @@ class MainActivity : AppCompatActivity() {
         val dailyAverage = used / elapsedDays
         val estimateDays = if (dailyAverage > 0L) remaining / dailyAverage else null
         val dailyBudgetBytes = prefs.getInt("daily_budget_mb", 500).coerceAtLeast(1).toLong() * 1024L * 1024L
-        val todayUsed = queryNetworkTotal(statsManager, netType, getDayStart(0), now)
+        val todayUsed = UsageFeatureUtils.totalMobileWifi(this, UsageFeatureUtils.Period(getDayStart(0), now))
         val dailyPercent = (todayUsed.toDouble() * 100.0 / dailyBudgetBytes).toInt().coerceIn(0, 100)
 
         return CardView(this).apply {
