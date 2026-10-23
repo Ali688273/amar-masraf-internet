@@ -307,8 +307,6 @@ class MainActivity : AppCompatActivity() {
         // Total Usage Card
         val totalBytes = queryNetworkTotal(statsManager, netType, start, end)
         contentLayout.addView(createTotalUsageCard(totalBytes))
-        contentLayout.addView(createPackageOverviewCard())
-        contentLayout.addView(createChartsButton())
         contentLayout.addView(createComparisonCard(statsManager, netType))
         contentLayout.addView(createSettingsCard())
         contentLayout.addView(createTrafficBreakdownCard(statsManager, netType, start, end))
@@ -318,7 +316,16 @@ class MainActivity : AppCompatActivity() {
             text = LanguageCalendar.text(this@MainActivity, "↻ بروزرسانی آمار", "↻ Refresh usage")
             setTextColor(Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@MainActivity, "primary"))
-            setOnClickListener { refreshUI() }
+            setOnClickListener {
+                if (!UsageFeatureUtils.hasUsageAccess(this@MainActivity)) {
+                    Toast.makeText(this@MainActivity, LanguageCalendar.text(this@MainActivity, "ابتدا دسترسی آمار مصرف را فعال کنید", "Enable Usage Access first"), Toast.LENGTH_LONG).show()
+                    startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                } else {
+                    isEnabled = false
+                    text = LanguageCalendar.text(this@MainActivity, "در حال بروزرسانی…", "Refreshing…")
+                    refreshAndSaveUsage(this)
+                }
+            }
         }
         contentLayout.addView(refreshButton)
 
@@ -349,6 +356,42 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    private fun refreshAndSaveUsage(button: Button) {
+        lifecycleScope.launch {
+            try {
+                val snapshot = withContext(Dispatchers.IO) {
+                    val manager = getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
+                    val (start, end) = getTimeRange(currentPeriod)
+                    val mobile = queryNetworkTotal(manager, ConnectivityManager.TYPE_MOBILE, start, end)
+                    val wifi = queryNetworkTotal(manager, ConnectivityManager.TYPE_WIFI, start, end)
+                    val appCount = queryAppUsageList(manager, if (currentTab == 0) ConnectivityManager.TYPE_MOBILE else ConnectivityManager.TYPE_WIFI, start, end).size
+                    Triple(mobile, wifi, appCount)
+                }
+                prefs.edit()
+                    .putLong("usage_snapshot_mobile_bytes", snapshot.first)
+                    .putLong("usage_snapshot_wifi_bytes", snapshot.second)
+                    .putInt("usage_snapshot_app_count", snapshot.third)
+                    .putLong("usage_snapshot_saved_at", System.currentTimeMillis())
+                    .apply()
+                refreshUI()
+                Toast.makeText(
+                    this@MainActivity,
+                    LanguageCalendar.text(this@MainActivity, "آمار به‌روزرسانی و ذخیره شد", "Usage statistics refreshed and saved"),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } catch (e: Exception) {
+                Log.e("NetworkStats", "Refresh and save failed", e)
+                button.isEnabled = true
+                button.text = LanguageCalendar.text(this@MainActivity, "↻ بروزرسانی آمار", "↻ Refresh usage")
+                Toast.makeText(
+                    this@MainActivity,
+                    LanguageCalendar.text(this@MainActivity, "بروزرسانی ناموفق بود؛ دسترسی آمار مصرف را بررسی کنید", "Refresh failed; check Usage Access permission"),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
 
     private fun createPackageOverviewCard(): CardView {
         val period = UsageFeatureUtils.billingPeriod(this)
@@ -720,13 +763,6 @@ class MainActivity : AppCompatActivity() {
         }
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
         layout.addView(TextView(this).apply { text = LanguageCalendar.text(this@MainActivity, "⚙️ تنظیمات بسته اینترنت", "⚙️ Data plan settings"); textSize = 15f; typeface = Typeface.DEFAULT_BOLD; setTextColor(ThemeManager.color(this@MainActivity, "text")) })
-        val themeButton = Button(this).apply {
-            text = LanguageCalendar.text(this@MainActivity, "🎨 تم برنامه: ${ThemeManager.name(ThemeManager.current(this@MainActivity))}", "🎨 App theme: ${ThemeManager.name(ThemeManager.current(this@MainActivity))}")
-            setTextColor(Color.WHITE)
-            setBackgroundColor(ThemeManager.color(this@MainActivity, "primary"))
-            setOnClickListener { showThemePicker() }
-        }
-        layout.addView(themeButton)
         val limit = EditText(this).apply { hint = LanguageCalendar.text(this@MainActivity, "حجم ماهانه (گیگابایت)", "Monthly allowance (GB)"); inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL; setText(monthlyLimitGb.toString()); setTextColor(ThemeManager.color(this@MainActivity, "text")); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
         val percent = EditText(this).apply { hint = LanguageCalendar.text(this@MainActivity, "درصد هشدار (مثلاً 80)", "Alert threshold (e.g. 80)"); inputType = android.text.InputType.TYPE_CLASS_NUMBER; setText(warningPercent.toString()); setTextColor(ThemeManager.color(this@MainActivity, "text")); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
         layout.addView(limit); layout.addView(percent)
