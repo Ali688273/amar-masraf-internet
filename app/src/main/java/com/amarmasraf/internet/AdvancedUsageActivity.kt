@@ -34,6 +34,13 @@ class AdvancedUsageActivity : AppCompatActivity() {
             setOnClickListener { showThemePicker() }
         })
 
+        val monthlyLimit=EditText(this).apply { hint="حجم بسته در چرخه قبض (گیگابایت)"; setText(prefs.getFloat("monthly_limit_gb",10f).toString()); inputType=8194; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        root.addView(monthlyLimit)
+        val warning=EditText(this).apply { hint="درصد هشدار سقف بسته (۱ تا ۱۰۰)"; setText(prefs.getInt("warning_percent",80).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        root.addView(warning)
+        val notifications=Switch(this).apply { text="فعال بودن هشدارهای مصرف"; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); isChecked=prefs.getBoolean("notifications",true) }
+        root.addView(notifications)
+
         val daily=EditText(this).apply { hint="بودجه روزانه (مگابایت)"; setText(prefs.getInt("daily_budget_mb",500).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(daily)
         val billing=EditText(this).apply { hint="روز شروع چرخه قبض، ۱ تا ۲۸"; setText(prefs.getInt("billing_start_day",1).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
@@ -47,10 +54,14 @@ class AdvancedUsageActivity : AppCompatActivity() {
             setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
             setOnClickListener {
                 prefs.edit()
+                    .putFloat("monthly_limit_gb", monthlyLimit.text.toString().toFloatOrNull()?.coerceAtLeast(0.1f) ?: 10f)
+                    .putInt("warning_percent", warning.text.toString().toIntOrNull()?.coerceIn(1,100) ?: 80)
+                    .putBoolean("notifications", notifications.isChecked)
                     .putInt("daily_budget_mb",daily.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 500)
                     .putInt("billing_start_day",billing.text.toString().toIntOrNull()?.coerceIn(1,28) ?: 1)
                     .putFloat("anomaly_multiplier",anomaly.text.toString().toFloatOrNull()?.coerceAtLeast(1.2f) ?: 2f).apply()
                 Toast.makeText(this@AdvancedUsageActivity,"تنظیمات ذخیره شد",Toast.LENGTH_SHORT).show()
+                if (notifications.isChecked) scheduleUsageAlerts() else cancelUsageAlerts()
                 build()
             }
         })
@@ -85,6 +96,27 @@ class AdvancedUsageActivity : AppCompatActivity() {
             }
         })
         setContentView(ScrollView(this).apply { addView(root) })
+    }
+
+    private fun scheduleUsageAlerts() {
+        val alarm = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        val intent = Intent(this, UsageAlertReceiver::class.java)
+        val pending = android.app.PendingIntent.getBroadcast(this, 7001, intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE)
+        val next = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 21)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+            if (timeInMillis <= System.currentTimeMillis()) add(java.util.Calendar.DAY_OF_YEAR, 1)
+        }
+        alarm.setInexactRepeating(android.app.AlarmManager.RTC_WAKEUP, next.timeInMillis, android.app.AlarmManager.INTERVAL_DAY, pending)
+    }
+
+    private fun cancelUsageAlerts() {
+        val alarm = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        val intent = Intent(this, UsageAlertReceiver::class.java)
+        val pending = android.app.PendingIntent.getBroadcast(this, 7001, intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE)
+        alarm.cancel(pending)
     }
 
     private fun showThemePicker() {
