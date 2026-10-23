@@ -13,14 +13,14 @@ import java.util.Calendar
 class UsageAlertReceiver:BroadcastReceiver(){
  override fun onReceive(c:Context,i:Intent?){
   val p=c.getSharedPreferences("settings",Context.MODE_PRIVATE)
-  if(!p.getBoolean("notifications",true))return
+  if(!p.getBoolean("notifications_configured", false) || !p.getBoolean("notifications", false))return
   val nm=c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
   val month=UsageFeatureUtils.billingPeriod(c)
   val total=UsageFeatureUtils.queryTotal(c,ConnectivityManager.TYPE_MOBILE,month.start,month.end)
   val limit=p.getFloat("monthly_limit_gb",10f).toDouble()*1024*1024*1024
   val warning=p.getInt("warning_percent",80).coerceIn(1,100)
   val percent=if(limit>0)total/limit*100 else 0.0
-  val thresholds=listOf(50,80,90,warning).distinct().sorted()
+  val thresholds=listOf(warning)
   thresholds.forEach { threshold ->
    val key="alerted_cycle_${month.start}_${threshold}"
    if(percent>=threshold && !p.getBoolean(key,false)){
