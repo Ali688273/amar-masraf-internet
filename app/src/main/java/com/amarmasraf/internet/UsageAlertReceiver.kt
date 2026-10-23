@@ -30,10 +30,19 @@ class UsageAlertReceiver:BroadcastReceiver(){
   }
   val budget=p.getInt("daily_budget_mb",500).toLong()*1024*1024
   val today=UsageFeatureUtils.totalMobileWifi(c,UsageFeatureUtils.today())
-  if(today>=budget)notify(c,nm,7003,"هشدار بودجه روزانه","مصرف امروز "+format(today)+" از بودجه "+format(budget)+" عبور کرده است.")
+  val dayKey=java.text.SimpleDateFormat("yyyyMMdd",java.util.Locale.US).format(java.util.Date())
+  val budgetKey="alerted_daily_budget_"+dayKey
+  if(today>=budget&&!p.getBoolean(budgetKey,false)){
+   notify(c,nm,7003,"هشدار بودجه روزانه","مصرف امروز "+format(today)+" از بودجه "+format(budget)+" عبور کرده است.")
+   p.edit().putBoolean(budgetKey,true).apply()
+  }
   val avg=sevenDayAverage(c)
   val mult=p.getFloat("anomaly_multiplier",2f)
-  if(avg>0&&today>avg*mult)notify(c,nm,7004,"مصرف غیرعادی","مصرف امروز بیش از "+mult+" برابر میانگین ۷ روز اخیر است.")
+  val anomalyKey="alerted_anomaly_"+dayKey
+  if(avg>0&&today>avg*mult&&!p.getBoolean(anomalyKey,false)){
+   notify(c,nm,7004,"مصرف غیرعادی","مصرف امروز بیش از "+mult+" برابر میانگین ۷ روز اخیر است.")
+   p.edit().putBoolean(anomalyKey,true).apply()
+  }
  }
  private fun sevenDayAverage(c:Context):Double{
   var sum=0L
