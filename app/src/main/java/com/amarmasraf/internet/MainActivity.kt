@@ -635,7 +635,7 @@ class MainActivity : AppCompatActivity() {
             val values = withContext(Dispatchers.IO) {
                 pendingRows.map { (_, range) -> queryNetworkTotal(statsManager, netType, range.first, range.second) }
             }
-            if (isFinishing || isDestroyed || !card.isAttachedToWindow) return@launch
+            if (isFinishing || isDestroyed) return@launch
             pendingRows.forEachIndexed { index, item -> item.first.text = formatBytes(values[index]) }
         }
         return card
