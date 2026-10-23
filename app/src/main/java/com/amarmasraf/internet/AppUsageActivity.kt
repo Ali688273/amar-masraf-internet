@@ -15,8 +15,9 @@ class AppUsageActivity:AppCompatActivity(){
  private lateinit var list:LinearLayout; private lateinit var search:EditText
  private var sort=0; private var networkMode=2; private var periodMode=0; private var searchQuery=""; private var all=emptyList<Item>()
  private var permissionMissing=false
+ private var appliedLanguage: String? = null
  override fun onCreate(b:Bundle?){super.onCreate(b);if(UsageFeatureUtils.hasUsageAccess(this))build()else showPermissionScreen()}
- override fun onResume(){super.onResume();if(permissionMissing&&UsageFeatureUtils.hasUsageAccess(this)){permissionMissing=false;build()}}
+ override fun onResume(){super.onResume();val selected=getSharedPreferences("settings", Context.MODE_PRIVATE).getString("language", "system");if(appliedLanguage!=null&&appliedLanguage!=selected){appliedLanguage=selected;build();return};if(permissionMissing&&UsageFeatureUtils.hasUsageAccess(this)){permissionMissing=false;build()}}
  private fun showPermissionScreen(){
   permissionMissing=true
   val page=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER;setPadding(24,30,24,30);setBackgroundColor(ThemeManager.color(this@AppUsageActivity,"background"))}
@@ -25,6 +26,7 @@ class AppUsageActivity:AppCompatActivity(){
   setContentView(page)
  }
  private fun build(){
+  appliedLanguage=getSharedPreferences("settings", Context.MODE_PRIVATE).getString("language", "system")
   val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,22,18,30);setBackgroundColor(ThemeManager.color(this@AppUsageActivity, "background"))}
   root.addView(TextView(this).apply{text=LanguageCalendar.text(this, "📱 مصرف برنامه‌ها", "📱 App usage");textSize=22f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(0,0,0,15)})
   search=EditText(this).apply{hint=LanguageCalendar.text(this, "جستجوی نام یا package", "Search app name or package");setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setHintTextColor(ThemeManager.color(this@AppUsageActivity, "muted"));setText(searchQuery)}
