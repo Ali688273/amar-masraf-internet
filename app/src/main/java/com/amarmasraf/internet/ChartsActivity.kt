@@ -3,6 +3,7 @@ package com.amarmasraf.internet
 import android.app.usage.NetworkStats
 import android.app.usage.NetworkStatsManager
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
@@ -45,13 +46,13 @@ class ChartsActivity:AppCompatActivity(){
  private fun createHourly(m:NetworkStatsManager):CardView{
   val card=CardView(this).apply{radius=20f;setCardBackgroundColor(ThemeManager.color(this@ChartsActivity, "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,8,0,18)}}
   val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,18,18,18)}
-  box.addView(TextView(this).apply{text="⏱ مصرف ساعتی امروز";textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE)})
+  box.addView(TextView(this).apply{text="⏱ مصرف ساعتی امروز";textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"))})
   val values=(0..23).map{hour->hourRange(hour).let{query(m,ConnectivityManager.TYPE_MOBILE,it.first,it.second)+query(m,ConnectivityManager.TYPE_WIFI,it.first,it.second)}}
   val max=values.maxOrNull()?.coerceAtLeast(1L)?:1L
   values.forEachIndexed{h,v->
    val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL}
    row.addView(TextView(this).apply{text=String.format(Locale.US,"%02d:00",h);setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));textSize=9f;layoutParams=LinearLayout.LayoutParams(48,-2)})
-   row.addView(TextView(this).apply{text=" ".repeat((v.toDouble()/max*24).toInt().coerceAtLeast(if(v>0)1 else 0));setTextColor(Color.TRANSPARENT);setBackgroundColor(ThemeManager.color(this@ChartsActivity, "accent"));layoutParams=LinearLayout.LayoutParams(0,15,1f).apply{setMargins(4,3,4,3)}})
+   row.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply{max=1000;progress=((v.toDouble()/max)*1000).toInt().coerceIn(0,1000);progressTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, "accent"));progressBackgroundTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, "background"));layoutParams=LinearLayout.LayoutParams(0,15,1f).apply{setMargins(4,3,4,3)}})
    row.addView(TextView(this).apply{text=format(v);setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));textSize=8f})
    box.addView(row)
   }
@@ -67,7 +68,7 @@ class ChartsActivity:AppCompatActivity(){
    val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL;setPadding(0,3,0,3)}
    val offset=when(mode){0->i-89;1->i-23;else->i-9}
    row.addView(TextView(this).apply{text=when(mode){0->if(offset==0)"امروز" else (-offset).toString()+" روز پیش";1->SimpleDateFormat("MM/yyyy",Locale.US).format(monthDate(offset));else->SimpleDateFormat("yyyy",Locale.US).format(yearDate(offset))};textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));layoutParams=LinearLayout.LayoutParams(62,-2)})
-   row.addView(TextView(this).apply{text=" ".repeat((data[i].toDouble()/max*22).toInt().coerceAtLeast(if(data[i]>0)1 else 0));setTextColor(Color.TRANSPARENT);setBackgroundColor(ThemeManager.color(this@ChartsActivity, if (title == "سیم‌کارت") "download" else "upload"));layoutParams=LinearLayout.LayoutParams(0,14,1f).apply{setMargins(4,0,4,0)}})
+   row.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply{max=1000;progress=((data[i].toDouble()/max)*1000).toInt().coerceIn(0,1000);progressTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, if (title == "سیم‌کارت") "download" else "upload"));progressBackgroundTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, "background"));layoutParams=LinearLayout.LayoutParams(0,14,1f).apply{setMargins(4,0,4,0)}})
    row.addView(TextView(this).apply{text=format(data[i]);textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"))})
    box.addView(row)
   }
@@ -76,8 +77,14 @@ class ChartsActivity:AppCompatActivity(){
  private fun summary(m:NetworkStatsManager)=CardView(this).apply{
   radius=20f;setCardBackgroundColor(ThemeManager.color(this@ChartsActivity, "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2)
   val p=when(mode){0->dayRange(0);1->monthRange(0);else->yearRange(0)}
-  val a=query(m,ConnectivityManager.TYPE_MOBILE,p.first,p.second);val w=query(m,ConnectivityManager.TYPE_WIFI,p.first,p.second)
-  addView(TextView(context).apply{text="مقایسه بازه فعلی\nسیم‌کارت: "+format(a)+"\nWi‑Fi: "+format(w)+"\nمجموع: "+format(a+w);textSize=14f;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(18,18,18,18)})
+  val previous=when(mode){0->dayRange(-1);1->monthRange(-1);else->yearRange(-1)}
+  val a=query(m,ConnectivityManager.TYPE_MOBILE,p.first,minOf(p.second,System.currentTimeMillis()))
+  val w=query(m,ConnectivityManager.TYPE_WIFI,p.first,minOf(p.second,System.currentTimeMillis()))
+  val prior=query(m,ConnectivityManager.TYPE_MOBILE,previous.first,previous.second)+query(m,ConnectivityManager.TYPE_WIFI,previous.first,previous.second)
+  val current=a+w
+  val change=if(prior>0)((current-prior).toDouble()/prior*100.0) else 0.0
+  val comparison=if(prior<=0)"برای بازه قبلی داده کافی نیست" else String.format(Locale.US,"تغییر نسبت به بازه قبل: %.0f%% %s",kotlin.math.abs(change),if(change>=0)"بیشتر" else "کمتر")
+  addView(TextView(context).apply{text="مقایسه بازه فعلی با بازه قبل\nسیم‌کارت: "+format(a)+"\nWi‑Fi: "+format(w)+"\nمجموع فعلی: "+format(current)+"\nمجموع بازه قبل: "+format(prior)+"\n"+comparison;textSize=14f;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(18,18,18,18)})
  }
  private fun query(m:NetworkStatsManager,t:Int,s:Long,e:Long):Long=try{val x=m.querySummary(t,null,s,e);val b=NetworkStats.Bucket();var z=0L;while(x.hasNextBucket()){x.getNextBucket(b);z+=b.rxBytes+b.txBytes};x.close();z}catch(_:Exception){0L}
  private fun dayRange(o:Int):Pair<Long,Long>{val c=Calendar.getInstance();c.add(Calendar.DAY_OF_YEAR,o);c.set(Calendar.HOUR_OF_DAY,0);c.set(Calendar.MINUTE,0);c.set(Calendar.SECOND,0);c.set(Calendar.MILLISECOND,0);return Pair(c.timeInMillis,c.timeInMillis+86400000L)}
