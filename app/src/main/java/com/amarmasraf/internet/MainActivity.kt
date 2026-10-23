@@ -360,7 +360,7 @@ class MainActivity : AppCompatActivity() {
             box.addView(TextView(context).apply {
                 text = if (estimateDays == null) "پیش‌بینی پایان بسته: پس از ثبت مصرف بیشتر قابل محاسبه است"
                 else if (estimateDays <= 0L) "پیش‌بینی: با روند فعلی سقف بسته امروز پر می‌شود"
-                else "پیش‌بینی پایان بسته: حدود ${estimateDays.coerceAtMost(3650)} روز دیگر با میانگین مصرف فعلی"
+                else "پیش‌بینی پایان بسته: حدود ${estimateDays.coerceAtMost(3650.0)} روز دیگر با میانگین مصرف فعلی"
                 textSize = 12f
                 setTextColor(ThemeManager.color(this@MainActivity, "accent"))
                 setPadding(0, 6, 0, 10)
