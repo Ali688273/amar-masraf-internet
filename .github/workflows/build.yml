@@ -45,6 +45,8 @@ jobs:
 
       - name: Build signed release APK
         env:
+          TAPSELL_APP_KEY: ${{ secrets.TAPSELL_APP_KEY }}
+          ADIVERY_APP_KEY: ${{ secrets.ADIVERY_APP_KEY }}
           RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
