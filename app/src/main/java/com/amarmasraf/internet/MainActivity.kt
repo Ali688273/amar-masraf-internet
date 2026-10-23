@@ -189,7 +189,7 @@ class MainActivity : AppCompatActivity() {
                 textSize = 11f
                 gravity = Gravity.CENTER
                 typeface = Typeface.DEFAULT_BOLD
-                setTextColor(Color.WHITE)
+                setTextColor(if (role == "cardAlt") ThemeManager.color(this@MainActivity, "text") else Color.WHITE)
                 setPadding(4, 9, 4, 9)
             })
         }
@@ -712,7 +712,7 @@ class MainActivity : AppCompatActivity() {
             val tv = TextView(context).apply {
                 text = title
                 textSize = 13f
-                setTextColor(Color.WHITE)
+                setTextColor(if (isSelected) Color.WHITE else ThemeManager.color(this@MainActivity, "text"))
                 gravity = Gravity.CENTER
                 setPadding(15, 18, 15, 18)
                 typeface = Typeface.DEFAULT_BOLD
