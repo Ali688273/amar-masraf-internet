@@ -40,6 +40,20 @@ class AdvancedUsageActivity : AppCompatActivity() {
             setOnClickListener { showThemePicker() }
         })
 
+        root.addView(Button(this).apply {
+            text = LanguageCalendar.text(this@AdvancedUsageActivity, "🌐 زبان برنامه: " + if (LanguageCalendar.isEnglish(this@AdvancedUsageActivity)) "English" else "فارسی", "🌐 App language: " + if (LanguageCalendar.isEnglish(this@AdvancedUsageActivity)) "English" else "Persian")
+            setTextColor(android.graphics.Color.WHITE)
+            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
+            setOnClickListener { showLanguagePicker() }
+        })
+        root.addView(Button(this).apply {
+            val solar = LanguageCalendar.isSolar(this@AdvancedUsageActivity)
+            text = LanguageCalendar.text(this@AdvancedUsageActivity, "📅 تقویم: " + if (solar) "خورشیدی" else "میلادی", "📅 Calendar: " + if (solar) "Solar Hijri" else "Gregorian")
+            setTextColor(android.graphics.Color.WHITE)
+            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
+            setOnClickListener { showCalendarPicker() }
+        })
+
         val monthlyLimit=EditText(this).apply { hint="حجم بسته در چرخه قبض (گیگابایت)"; setText(prefs.getFloat("monthly_limit_gb",10f).toString()); inputType=8194; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(monthlyLimit)
         val warning=EditText(this).apply { hint="درصد هشدار سقف بسته (۱ تا ۱۰۰)"; setText(prefs.getInt("warning_percent",80).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
@@ -139,6 +153,34 @@ class AdvancedUsageActivity : AppCompatActivity() {
         alarm.cancel(pending)
     }
 
+    private fun showLanguagePicker() {
+        val english = LanguageCalendar.isEnglish(this)
+        val options = arrayOf("فارسی", "English")
+        android.app.AlertDialog.Builder(this)
+            .setTitle(LanguageCalendar.text(this, "انتخاب زبان برنامه", "Choose app language"))
+            .setSingleChoiceItems(options, if (english) 1 else 0) { dialog, which ->
+                prefs.edit().putString("language", if (which == 1) "en" else "fa").apply()
+                dialog.dismiss()
+                recreate()
+            }
+            .setNegativeButton(LanguageCalendar.text(this, "انصراف", "Cancel"), null)
+            .show()
+    }
+
+    private fun showCalendarPicker() {
+        val solar = LanguageCalendar.isSolar(this)
+        val options = arrayOf("تقویم خورشیدی", "تقویم میلادی")
+        android.app.AlertDialog.Builder(this)
+            .setTitle(LanguageCalendar.text(this, "انتخاب نوع تقویم", "Choose calendar"))
+            .setSingleChoiceItems(options, if (solar) 0 else 1) { dialog, which ->
+                prefs.edit().putString("calendar", if (which == 0) "solar" else "gregorian").apply()
+                dialog.dismiss()
+                recreate()
+            }
+            .setNegativeButton(LanguageCalendar.text(this, "انصراف", "Cancel"), null)
+            .show()
+    }
+
     private fun showThemePicker() {
         val ids = ThemeManager.ids()
         val labels = ids.map { "●  " + ThemeManager.name(it) }.toTypedArray()
@@ -172,7 +214,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
         val p=UsageFeatureUtils.billingPeriod(this)
         val used=UsageFeatureUtils.queryTotal(this,ConnectivityManager.TYPE_MOBILE,p.start,p.end)
         val limit=(prefs.getFloat("monthly_limit_gb",10f)*1024*1024*1024).toLong()
-        return "شروع چرخه: "+java.text.SimpleDateFormat("yyyy/MM/dd",java.util.Locale.US).format(java.util.Date(p.start))+"\nمصرف سیم‌کارت: "+UsageFeatureUtils.formatBytes(used)+" از "+UsageFeatureUtils.formatBytes(limit)
+        return "شروع چرخه: "+LanguageCalendar.date(this, p.start)+"\nمصرف سیم‌کارت: "+UsageFeatureUtils.formatBytes(used)+" از "+UsageFeatureUtils.formatBytes(limit)
     }
     private fun anomalyStatus():String{
         val today=UsageFeatureUtils.totalMobileWifi(this,UsageFeatureUtils.today())
