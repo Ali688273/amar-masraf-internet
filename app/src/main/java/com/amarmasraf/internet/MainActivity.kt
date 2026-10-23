@@ -80,6 +80,10 @@ class MainActivity : AppCompatActivity() {
             recreate()
             return
         }
+        if (::contentLayout.isInitialized && !checkUsageStatsPermission()) {
+            recreate()
+            return
+        }
         if (!::contentLayout.isInitialized && checkUsageStatsPermission()) {
             recreate()
         }
