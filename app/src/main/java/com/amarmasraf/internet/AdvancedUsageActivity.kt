@@ -86,6 +86,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
             }
         })
 
+        root.addView(card("📦 وضعیت بسته و پیش‌بینی مصرف", packageForecastStatus()))
         root.addView(card("📅 بودجه امروز", todayBudget()))
         root.addView(card("📊 چرخه قبض", billingStatus()))
         root.addView(card("⚠️ مصرف غیرعادی", anomalyStatus()))
@@ -132,6 +133,28 @@ class AdvancedUsageActivity : AppCompatActivity() {
             }
         })
         setContentView(ScrollView(this).apply { addView(root) })
+    }
+
+    private fun packageForecastStatus(): String {
+        val now = System.currentTimeMillis()
+        val period = UsageFeatureUtils.billingPeriod(this)
+        val used = UsageFeatureUtils.queryTotal(this, ConnectivityManager.TYPE_MOBILE, period.start, now)
+        val limitBytes = (prefs.getFloat("monthly_limit_gb", 10f).coerceAtLeast(0.1f) * 1024.0 * 1024.0 * 1024.0).toLong()
+        val remaining = (limitBytes - used).coerceAtLeast(0L)
+        val percent = if (limitBytes > 0L) (used.toDouble() * 100.0 / limitBytes).toInt().coerceAtLeast(0) else 0
+        val elapsedDays = ((now - period.start).coerceAtLeast(1L) / 86_400_000.0).coerceAtLeast(0.25)
+        val dailyAverage = used / elapsedDays
+        val estimateDays = if (dailyAverage > 0.0) remaining / dailyAverage else null
+        val forecast = when {
+            estimateDays == null -> LanguageCalendar.text(this, "برای پیش‌بینی، ابتدا مقداری مصرف ثبت شود.", "More usage data is needed for a forecast.")
+            estimateDays <= 0.0 -> LanguageCalendar.text(this, "با روند فعلی، سقف بسته امروز پر شده یا می‌شود.", "At the current rate, the data limit is reached today.")
+            else -> LanguageCalendar.text(this, "زمان تقریبی باقی‌مانده: ${estimateDays.coerceAtMost(3650.0).toInt()} روز", "Estimated time remaining: ${estimateDays.coerceAtMost(3650.0).toInt()} days")
+        }
+        val savedAt = prefs.getLong("usage_snapshot_saved_at", 0L)
+        val lastRefresh = if (savedAt > 0L) LanguageCalendar.text(this, "آخرین بروزرسانی: ثبت شده", "Last refresh: saved") else LanguageCalendar.text(this, "برای ثبت آخرین آمار از دکمه بروزرسانی در خانه استفاده کنید.", "Use Refresh on Home to save the latest snapshot.")
+        return LanguageCalendar.text(this, "مصرف چرخه: ${UsageFeatureUtils.formatBytes(used)} از ${UsageFeatureUtils.formatBytes(limitBytes)} ($percent%)", "Cycle usage: ${UsageFeatureUtils.formatBytes(used)} of ${UsageFeatureUtils.formatBytes(limitBytes)} ($percent%)") +
+            "\n" + LanguageCalendar.text(this, "باقی‌مانده: ${UsageFeatureUtils.formatBytes(remaining)}", "Remaining: ${UsageFeatureUtils.formatBytes(remaining)}") +
+            "\n" + forecast + "\n" + lastRefresh
     }
 
     private fun scheduleUsageAlerts() {
