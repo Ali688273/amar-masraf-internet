@@ -48,11 +48,11 @@ class ChartsActivity:AppCompatActivity(){
   val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,18,18,18)}
   box.addView(TextView(this).apply{text="⏱ مصرف ساعتی امروز";textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"))})
   val values=(0..23).map{hour->hourRange(hour).let{query(m,ConnectivityManager.TYPE_MOBILE,it.first,it.second)+query(m,ConnectivityManager.TYPE_WIFI,it.first,it.second)}}
-  val max=values.maxOrNull()?.coerceAtLeast(1L)?:1L
+  val maxValue=values.maxOrNull()?.coerceAtLeast(1L)?:1L
   values.forEachIndexed{h,v->
    val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL}
    row.addView(TextView(this).apply{text=String.format(Locale.US,"%02d:00",h);setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));textSize=9f;layoutParams=LinearLayout.LayoutParams(48,-2)})
-   row.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply{max=1000;progress=((v.toDouble()/max)*1000).toInt().coerceIn(0,1000);progressTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, "accent"));progressBackgroundTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, "background"));layoutParams=LinearLayout.LayoutParams(0,15,1f).apply{setMargins(4,3,4,3)}})
+   row.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply{max=1000;progress=((v.toDouble()/maxValue)*1000).toInt().coerceIn(0,1000);progressTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, "accent"));progressBackgroundTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, "background"));layoutParams=LinearLayout.LayoutParams(0,15,1f).apply{setMargins(4,3,4,3)}})
    row.addView(TextView(this).apply{text=format(v);setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));textSize=8f})
    box.addView(row)
   }
@@ -63,12 +63,12 @@ class ChartsActivity:AppCompatActivity(){
   val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,18,18,18)}
   box.addView(TextView(this).apply{text=title;textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"))})
   val ranges=when(mode){0->(89 downTo 0).map{dayRange(-it)};1->(23 downTo 0).map{monthRange(-it)};else->(9 downTo 0).map{yearRange(-it)}}
-  val data=ranges.map{query(m,type,it.first,it.second)};val max=data.maxOrNull()?.coerceAtLeast(1L)?:1L
+  val data=ranges.map{query(m,type,it.first,it.second)};val maxValue=data.maxOrNull()?.coerceAtLeast(1L)?:1L
   ranges.indices.forEach{i->
    val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL;setPadding(0,3,0,3)}
    val offset=when(mode){0->i-89;1->i-23;else->i-9}
    row.addView(TextView(this).apply{text=when(mode){0->if(offset==0)"امروز" else (-offset).toString()+" روز پیش";1->SimpleDateFormat("MM/yyyy",Locale.US).format(monthDate(offset));else->SimpleDateFormat("yyyy",Locale.US).format(yearDate(offset))};textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));layoutParams=LinearLayout.LayoutParams(62,-2)})
-   row.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply{max=1000;progress=((data[i].toDouble()/max)*1000).toInt().coerceIn(0,1000);progressTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, if (title == "سیم‌کارت") "download" else "upload"));progressBackgroundTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, "background"));layoutParams=LinearLayout.LayoutParams(0,14,1f).apply{setMargins(4,0,4,0)}})
+   row.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply{max=1000;progress=((data[i].toDouble()/maxValue)*1000).toInt().coerceIn(0,1000);progressTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, if (title == "سیم‌کارت") "download" else "upload"));progressBackgroundTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, "background"));layoutParams=LinearLayout.LayoutParams(0,14,1f).apply{setMargins(4,0,4,0)}})
    row.addView(TextView(this).apply{text=format(data[i]);textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"))})
    box.addView(row)
   }
