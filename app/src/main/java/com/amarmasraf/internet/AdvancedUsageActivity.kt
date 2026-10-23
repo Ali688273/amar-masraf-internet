@@ -103,13 +103,11 @@ class AdvancedUsageActivity : AppCompatActivity() {
         val intent = Intent(this, UsageAlertReceiver::class.java)
         val pending = android.app.PendingIntent.getBroadcast(this, 7001, intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE)
         val next = java.util.Calendar.getInstance().apply {
-            set(java.util.Calendar.HOUR_OF_DAY, 21)
-            set(java.util.Calendar.MINUTE, 0)
+            add(java.util.Calendar.MINUTE, 5)
             set(java.util.Calendar.SECOND, 0)
             set(java.util.Calendar.MILLISECOND, 0)
-            if (timeInMillis <= System.currentTimeMillis()) add(java.util.Calendar.DAY_OF_YEAR, 1)
         }
-        alarm.setInexactRepeating(android.app.AlarmManager.RTC_WAKEUP, next.timeInMillis, android.app.AlarmManager.INTERVAL_DAY, pending)
+        alarm.setInexactRepeating(android.app.AlarmManager.RTC_WAKEUP, next.timeInMillis, android.app.AlarmManager.INTERVAL_HOUR, pending)
     }
 
     private fun cancelUsageAlerts() {
