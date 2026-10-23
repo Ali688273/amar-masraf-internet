@@ -27,7 +27,7 @@ class AppUsageActivity:AppCompatActivity(){
  private fun build(){
   val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,22,18,30);setBackgroundColor(ThemeManager.color(this@AppUsageActivity, "background"))}
   root.addView(TextView(this).apply{text=LanguageCalendar.text(this, "📱 مصرف برنامه‌ها", "📱 App usage");textSize=22f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(0,0,0,15)})
-  search=EditText(this).apply{hint="جستجوی نام یا package";setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setHintTextColor(ThemeManager.color(this@AppUsageActivity, "muted"));setText(searchQuery)}
+  search=EditText(this).apply{hint=LanguageCalendar.text(this, "جستجوی نام یا package", "Search app name or package");setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setHintTextColor(ThemeManager.color(this@AppUsageActivity, "muted"));setText(searchQuery)}
   root.addView(search)
   val networks=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
   listOf(LanguageCalendar.text(this, "سیم‌کارت", "Mobile"),LanguageCalendar.text(this, "وای‌فای", "Wi-Fi"),LanguageCalendar.text(this, "همه شبکه‌ها", "All networks")).forEachIndexed{i,t->networks.addView(Button(this).apply{text=t;setTextColor(if(networkMode==i)android.graphics.Color.WHITE else ThemeManager.color(this@AppUsageActivity,"text"));setBackgroundColor(ThemeManager.color(this@AppUsageActivity,if(networkMode==i)"primary" else "cardAlt"));setOnClickListener{networkMode=i;build()}})}
