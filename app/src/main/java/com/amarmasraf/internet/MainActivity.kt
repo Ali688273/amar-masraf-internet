@@ -480,15 +480,15 @@ class MainActivity : AppCompatActivity() {
             setPadding(20, 20, 20, 20)
         }
         layout.addView(TextView(this).apply {
-            text = if (period == 1) "گزارش روزانه ۷ روز اخیر" else "گزارش روزانه ۳۰ روز اخیر"
+            text = if (period == 1) "گزارش روزانه ۷ روز اخیر" else "مصرف روزانه در ماه جاری"
             textSize = 15f
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(ThemeManager.color(this@MainActivity, "text"))
             setPadding(0, 0, 0, 12)
         })
-        val days = if (period == 1) 7 else 30
+        val days = if (period == 1) 7 else Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
         for (day in minOf(days, 30) downTo 1) {
-            val (s, e) = dayRange(day)
+            val (s, e) = if (period == 2) dayOfMonthRange(day) else dayRange(day)
             val bytes = queryNetworkTotal(statsManager, netType, s, e)
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
@@ -496,7 +496,7 @@ class MainActivity : AppCompatActivity() {
                 setPadding(0, 5, 0, 5)
             }
             row.addView(TextView(this).apply {
-                text = if (day == 1) "امروز" else "${day - 1} روز پیش"
+                text = if (period == 2) "روز $day" else if (day == 1) "امروز" else "${day - 1} روز پیش"
                 textSize = 11f
                 setTextColor(ThemeManager.color(this@MainActivity, "soft"))
                 layoutParams = LinearLayout.LayoutParams(75, LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -526,6 +526,18 @@ class MainActivity : AppCompatActivity() {
         cal.set(Calendar.SECOND, 0)
         cal.set(Calendar.MILLISECOND, 0)
         return Pair(cal.timeInMillis, cal.timeInMillis + 86400000L)
+    }
+
+    private fun dayOfMonthRange(dayOfMonth: Int): Pair<Long, Long> {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        val start = cal.timeInMillis
+        cal.add(Calendar.DAY_OF_MONTH, 1)
+        return Pair(start, minOf(cal.timeInMillis, System.currentTimeMillis()))
     }
 
     private fun queryNetworkDirection(statsManager: NetworkStatsManager, netType: Int, start: Long, end: Long, download: Boolean): Long {
@@ -751,8 +763,14 @@ class MainActivity : AppCompatActivity() {
                 cal.set(Calendar.SECOND, 0)
                 cal.set(Calendar.MILLISECOND, 0)
             }
-            1 -> { // Week
-                cal.add(Calendar.DAY_OF_YEAR, -7)
+            1 -> { // Current calendar week, starting Monday
+                cal.setFirstDayOfWeek(Calendar.MONDAY)
+                val daysSinceMonday = (cal.get(Calendar.DAY_OF_WEEK) + 5) % 7
+                cal.add(Calendar.DAY_OF_YEAR, -daysSinceMonday)
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
             }
             2 -> { // Current calendar month, from the first day until now
                 cal.set(Calendar.DAY_OF_MONTH, 1)
