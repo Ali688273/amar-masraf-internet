@@ -17,13 +17,13 @@ class CsvExportActivity:AppCompatActivity(){
  private fun showPermissionScreen(){
   permissionMissing=true
   val page=android.widget.LinearLayout(this).apply{orientation=android.widget.LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER;setPadding(24,30,24,30)}
-  page.addView(android.widget.TextView(this).apply{text="برای خروجی دقیق CSV، ابتدا دسترسی «آمار مصرف» را فعال کنید.";textSize=16f;gravity=android.view.Gravity.CENTER})
-  page.addView(android.widget.Button(this).apply{text="باز کردن تنظیمات دسترسی";setOnClickListener{startActivity(Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))}})
+  page.addView(android.widget.TextView(this).apply{text=LanguageCalendar.text(this, "برای خروجی دقیق CSV، ابتدا دسترسی «آمار مصرف» را فعال کنید.", "Enable Usage Access before exporting an accurate CSV report.");textSize=16f;gravity=android.view.Gravity.CENTER})
+  page.addView(android.widget.Button(this).apply{text=LanguageCalendar.text(this, "باز کردن تنظیمات دسترسی", "Open access settings");setOnClickListener{startActivity(Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))}})
   setContentView(page)
  }
  private fun export(){
   val page=android.widget.LinearLayout(this).apply{orientation=android.widget.LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER;setPadding(24,30,24,30)}
-  page.addView(android.widget.TextView(this).apply{text="در حال آماده‌سازی گزارش CSV…";textSize=16f;gravity=android.view.Gravity.CENTER})
+  page.addView(android.widget.TextView(this).apply{text=LanguageCalendar.text(this, "در حال آماده‌سازی گزارش CSV…", "Preparing CSV report…");textSize=16f;gravity=android.view.Gravity.CENTER})
   setContentView(page)
   lifecycleScope.launch{
    pending=withContext(Dispatchers.IO){buildCsv()}
