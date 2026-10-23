@@ -10,6 +10,7 @@ import android.Manifest
 import android.app.usage.NetworkStats
 import android.app.usage.NetworkStatsManager
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
@@ -34,6 +35,7 @@ import android.widget.TextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Switch
+import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import ir.tapsell.plus.TapsellPlus
@@ -62,6 +64,7 @@ class MainActivity : AppCompatActivity() {
     private var lastTx: Long = 0
     private var lastTime: Long = 0
     private val speedHandler = Handler(Looper.getMainLooper())
+    private var speedRunnable: Runnable? = null
     private val prefs by lazy { getSharedPreferences("settings", Context.MODE_PRIVATE) }
     private val warningPercent get() = prefs.getInt("warning_percent", 80)
     private val monthlyLimitGb get() = prefs.getFloat("monthly_limit_gb", 10f)
@@ -268,6 +271,7 @@ class MainActivity : AppCompatActivity() {
         // Total Usage Card
         val totalBytes = queryNetworkTotal(statsManager, netType, start, end)
         contentLayout.addView(createTotalUsageCard(totalBytes))
+        contentLayout.addView(createPackageOverviewCard(statsManager, netType))
         contentLayout.addView(createChartsButton())
         contentLayout.addView(createComparisonCard(statsManager, netType))
         contentLayout.addView(createSettingsCard())
@@ -286,7 +290,7 @@ class MainActivity : AppCompatActivity() {
         val listTitle = TextView(this).apply {
             text = "مصرف اینترنت برنامه‌ها (دانلود / آپلود)"
             textSize = 16f
-            setTextColor(Color.WHITE)
+            setTextColor(ThemeManager.color(this@MainActivity, "text"))
             typeface = Typeface.DEFAULT_BOLD
             setPadding(5, 20, 5, 10)
         }
@@ -309,6 +313,79 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    private fun createPackageOverviewCard(statsManager: NetworkStatsManager, netType: Int): CardView {
+        val period = UsageFeatureUtils.billingPeriod(this)
+        val now = System.currentTimeMillis()
+        val used = queryNetworkTotal(statsManager, netType, period.start, now)
+        val limitBytes = (monthlyLimitGb.coerceAtLeast(0.1f) * 1024.0 * 1024.0 * 1024.0).toLong()
+        val percent = if (limitBytes > 0L) (used.toDouble() * 100.0 / limitBytes).toInt() else 0
+        val remaining = (limitBytes - used).coerceAtLeast(0L)
+        val elapsedDays = ((now - period.start).coerceAtLeast(1L) / 86_400_000.0).coerceAtLeast(1.0)
+        val dailyAverage = used / elapsedDays
+        val estimateDays = if (dailyAverage > 0L) remaining / dailyAverage else null
+        val dailyBudgetBytes = prefs.getInt("daily_budget_mb", 500).coerceAtLeast(1).toLong() * 1024L * 1024L
+        val todayUsed = queryNetworkTotal(statsManager, netType, getDayStart(0), now)
+        val dailyPercent = (todayUsed.toDouble() * 100.0 / dailyBudgetBytes).toInt().coerceIn(0, 100)
+
+        return CardView(this).apply {
+            radius = 20f
+            setCardBackgroundColor(ThemeManager.color(this@MainActivity, "cardAlt"))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
+            val box = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
+            box.addView(TextView(context).apply {
+                text = "📦 وضعیت بسته و پیش‌بینی مصرف"
+                textSize = 16f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(ThemeManager.color(this@MainActivity, "text"))
+            })
+            box.addView(TextView(context).apply {
+                text = "مصرف چرخه: ${formatBytes(used)} از ${formatBytes(limitBytes)} • ${percent.coerceAtLeast(0)}٪"
+                textSize = 12f
+                setTextColor(ThemeManager.color(this@MainActivity, "text"))
+                setPadding(0, 10, 0, 5)
+            })
+            box.addView(ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal).apply {
+                max = 100
+                progress = percent.coerceIn(0, 100)
+                progressTintList = ColorStateList.valueOf(ThemeManager.color(this@MainActivity, if (percent >= 90) "danger" else "primary"))
+                progressBackgroundTintList = ColorStateList.valueOf(ThemeManager.color(this@MainActivity, "background"))
+                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 12).apply { setMargins(0, 0, 0, 8) }
+            })
+            box.addView(TextView(context).apply {
+                text = "باقی‌مانده بسته: ${formatBytes(remaining)}"
+                textSize = 12f
+                setTextColor(ThemeManager.color(this@MainActivity, "muted"))
+            })
+            box.addView(TextView(context).apply {
+                text = if (estimateDays == null) "پیش‌بینی پایان بسته: پس از ثبت مصرف بیشتر قابل محاسبه است"
+                else if (estimateDays <= 0L) "پیش‌بینی: با روند فعلی سقف بسته امروز پر می‌شود"
+                else "پیش‌بینی پایان بسته: حدود ${estimateDays.coerceAtMost(3650)} روز دیگر با میانگین مصرف فعلی"
+                textSize = 12f
+                setTextColor(ThemeManager.color(this@MainActivity, "accent"))
+                setPadding(0, 6, 0, 10)
+            })
+            box.addView(TextView(context).apply {
+                text = "بودجه امروز: ${formatBytes(todayUsed)} از ${formatBytes(dailyBudgetBytes)}"
+                textSize = 12f
+                setTextColor(ThemeManager.color(this@MainActivity, "text"))
+            })
+            box.addView(ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal).apply {
+                max = 100
+                progress = dailyPercent
+                progressTintList = ColorStateList.valueOf(ThemeManager.color(this@MainActivity, if (todayUsed >= dailyBudgetBytes) "danger" else "upload"))
+                progressBackgroundTintList = ColorStateList.valueOf(ThemeManager.color(this@MainActivity, "background"))
+                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 10).apply { setMargins(0, 4, 0, 0) }
+            })
+            addView(box)
+        }
+    }
+
+    override fun onDestroy() {
+        speedRunnable?.let { speedHandler.removeCallbacks(it) }
+        speedRunnable = null
+        super.onDestroy()
+    }
 
     private fun createChartsButton(): CardView {
         return CardView(this).apply {
@@ -589,10 +666,10 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener { showThemePicker() }
         }
         layout.addView(themeButton)
-        val limit = EditText(this).apply { hint = "حجم ماهانه (گیگابایت)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL; setText(monthlyLimitGb.toString()); setTextColor(Color.WHITE); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
-        val percent = EditText(this).apply { hint = "درصد هشدار (مثلاً 80)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER; setText(warningPercent.toString()); setTextColor(Color.WHITE); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
+        val limit = EditText(this).apply { hint = "حجم ماهانه (گیگابایت)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL; setText(monthlyLimitGb.toString()); setTextColor(ThemeManager.color(this@MainActivity, "text")); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
+        val percent = EditText(this).apply { hint = "درصد هشدار (مثلاً 80)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER; setText(warningPercent.toString()); setTextColor(ThemeManager.color(this@MainActivity, "text")); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
         layout.addView(limit); layout.addView(percent)
-        val notify = Switch(this).apply { text = "اعلان نزدیک‌شدن به سقف مصرف"; setTextColor(Color.WHITE); isChecked = prefs.getBoolean("notifications", true) }
+        val notify = Switch(this).apply { text = "اعلان نزدیک‌شدن به سقف مصرف"; setTextColor(ThemeManager.color(this@MainActivity, "text")); isChecked = prefs.getBoolean("notifications", true) }
         layout.addView(notify)
         val save = Button(this).apply {
             text = "ذخیره تنظیمات"
@@ -840,32 +917,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startSpeedChecker() {
-        lastRx = TrafficStats.getTotalRxBytes()
-        lastTx = TrafficStats.getTotalTxBytes()
+        lastRx = TrafficStats.getTotalRxBytes().coerceAtLeast(0L)
+        lastTx = TrafficStats.getTotalTxBytes().coerceAtLeast(0L)
         lastTime = System.currentTimeMillis()
-
-        speedHandler.postDelayed(object : Runnable {
+        speedRunnable = object : Runnable {
             override fun run() {
-                val currentRx = TrafficStats.getTotalRxBytes()
-                val currentTx = TrafficStats.getTotalTxBytes()
+                if (isFinishing || isDestroyed) return
+                val currentRx = TrafficStats.getTotalRxBytes().coerceAtLeast(0L)
+                val currentTx = TrafficStats.getTotalTxBytes().coerceAtLeast(0L)
                 val currentTime = System.currentTimeMillis()
-
                 val timeDiff = (currentTime - lastTime) / 1000.0
-                if (timeDiff > 0) {
-                    val dlSpeed = ((currentRx - lastRx) * 8 / timeDiff) / (1024 * 1024)
-                    val ulSpeed = ((currentTx - lastTx) * 8 / timeDiff) / (1024 * 1024)
-
-                    downloadSpeedTv.text = String.format("%.1f Mb/s", if (dlSpeed < 0) 0.0 else dlSpeed)
-                    uploadSpeedTv.text = String.format("%.1f Mb/s", if (ulSpeed < 0) 0.0 else ulSpeed)
+                if (timeDiff > 0.0) {
+                    val dlSpeed = ((currentRx - lastRx).coerceAtLeast(0L) * 8.0 / timeDiff) / (1024.0 * 1024.0)
+                    val ulSpeed = ((currentTx - lastTx).coerceAtLeast(0L) * 8.0 / timeDiff) / (1024.0 * 1024.0)
+                    downloadSpeedTv.text = String.format(Locale.US, "%.2f Mbps", dlSpeed)
+                    uploadSpeedTv.text = String.format(Locale.US, "%.2f Mbps", ulSpeed)
                 }
-
                 lastRx = currentRx
                 lastTx = currentTx
                 lastTime = currentTime
-
-                speedHandler.postDelayed(this, 2000)
+                speedRunnable?.let { speedHandler.postDelayed(it, 2000) }
             }
-        }, 2000)
+        }
+        speedRunnable?.let { speedHandler.postDelayed(it, 2000) }
     }
 
     private fun checkUsageStatsPermission(): Boolean {
