@@ -45,6 +45,7 @@ object AdsManager {
     private const val ADIVERY_NATIVE = "3a700fe5-3de4-44cf-9d6b-4d7348224983"
 
     @Volatile private var tapsellReady = false
+    @Volatile private var adiveryPreloaded = false
     @Volatile private var lastFullScreenShownAt = 0L
     @Volatile private var tapsellInterstitialResponseId: String? = null
     @Volatile private var tapsellRewardedResponseId: String? = null
@@ -274,6 +275,16 @@ object AdsManager {
     }
 
     fun onMainResume(activity: Activity) {
+        if (!adiveryPreloaded && BuildConfig.ADIVERY_APP_KEY.isNotBlank()) {
+            try {
+                Adivery.prepareInterstitialAd(activity, A_INTERSTITIAL)
+                Adivery.prepareRewardedAd(activity, A_REWARDED)
+                Adivery.prepareAppOpenAd(activity, A_APP_OPEN)
+                adiveryPreloaded = true
+            } catch (e: Exception) {
+                Log.w(TAG, "Adivery ad preload failed", e)
+            }
+        }
         val prefs = activity.getSharedPreferences("ad_settings", Context.MODE_PRIVATE)
         val lastPause = prefs.getLong("last_main_pause", 0L)
         val now = System.currentTimeMillis()
