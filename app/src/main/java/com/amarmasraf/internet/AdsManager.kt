@@ -281,6 +281,53 @@ object AdsManager {
     }
 
     /** Rewarded ads are prepared here, but only shown by an explicit feature/action that grants a real reward. */
+    fun maybeShowInterstitial(activity: Activity, continueNavigation: () -> Unit) {
+        val now = System.currentTimeMillis()
+        if (now - lastFullScreenShownAt < FULL_SCREEN_COOLDOWN_MS) {
+            continueNavigation()
+            return
+        }
+        val responseId = tapsellInterstitialResponseId
+        if (tapsellReady && !responseId.isNullOrBlank()) {
+            tapsellInterstitialResponseId = null
+            try {
+                TapsellPlus.showInterstitialAd(activity, responseId, object : AdShowListener() {
+                    override fun onOpened(model: TapsellPlusAdModel) {
+                        lastFullScreenShownAt = System.currentTimeMillis()
+                    }
+                    override fun onClosed(model: TapsellPlusAdModel) {
+                        preloadTapsellInterstitial(activity)
+                    }
+                    override fun onError(error: TapsellPlusErrorModel) {
+                        Log.w(TAG, "Tapsell interstitial show failed")
+                        showAdiveryInterstitialIfReady(activity)
+                        preloadTapsellInterstitial(activity)
+                    }
+                })
+                lastFullScreenShownAt = now
+                continueNavigation()
+                return
+            } catch (e: Exception) {
+                Log.w(TAG, "Tapsell interstitial show threw", e)
+            }
+        }
+        showAdiveryInterstitialIfReady(activity)
+        continueNavigation()
+    }
+
+    private fun showAdiveryInterstitialIfReady(activity: Activity) {
+        try {
+            if (Adivery.isLoaded(ADIVERY_INTERSTITIAL)) {
+                Adivery.showAd(ADIVERY_INTERSTITIAL)
+                lastFullScreenShownAt = System.currentTimeMillis()
+            } else {
+                Adivery.prepareInterstitialAd(activity, ADIVERY_INTERSTITIAL)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Adivery interstitial failed", e)
+        }
+    }
+
     fun showRewardedAfterUserAction(activity: Activity, onReward: () -> Unit) {
         if (tapsellReady) {
             try {
