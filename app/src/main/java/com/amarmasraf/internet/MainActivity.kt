@@ -38,6 +38,10 @@ import android.widget.Switch
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ir.tapsell.plus.TapsellPlus
 import ir.tapsell.plus.TapsellPlusBannerType
 import ir.tapsell.plus.AdRequestCallback
@@ -597,9 +601,9 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, 0, 0, 12)
         })
         val days = if (period == 1) 7 else Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+        val pendingRows = mutableListOf<Pair<TextView, Pair<Long, Long>>>()
         for (day in minOf(days, 30) downTo 1) {
             val (s, e) = if (period == 2) dayOfMonthRange(day) else dayRange(day)
-            val bytes = queryNetworkTotal(statsManager, netType, s, e)
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
@@ -617,14 +621,23 @@ class MainActivity : AppCompatActivity() {
                 setTextColor(ThemeManager.color(this@MainActivity, "accent"))
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             })
-            row.addView(TextView(this).apply {
-                text = formatBytes(bytes)
+            val valueView = TextView(this).apply {
+                text = "در حال محاسبه…"
                 textSize = 10f
                 setTextColor(ThemeManager.color(this@MainActivity, "muted"))
-            })
+            }
+            row.addView(valueView)
+            pendingRows.add(valueView to Pair(s, e))
             layout.addView(row)
         }
         card.addView(layout)
+        lifecycleScope.launch {
+            val values = withContext(Dispatchers.IO) {
+                pendingRows.map { (_, range) -> queryNetworkTotal(statsManager, netType, range.first, range.second) }
+            }
+            if (isFinishing || isDestroyed || !card.isAttachedToWindow) return@launch
+            pendingRows.forEachIndexed { index, item -> item.first.text = formatBytes(values[index]) }
+        }
         return card
     }
 
