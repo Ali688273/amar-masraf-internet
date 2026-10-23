@@ -51,7 +51,7 @@ jobs:
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
-          gradle assembleRelease \
+          gradle assembleRelease -PTAPSELL_APP_KEY="$TAPSELL_APP_KEY" -PADIVERY_APP_KEY="$ADIVERY_APP_KEY" \
             -Pandroid.injected.signing.store.file="$(pwd)/release.keystore" \
             -Pandroid.injected.signing.store.password="$RELEASE_STORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$RELEASE_KEY_ALIAS" \
