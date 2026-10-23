@@ -148,9 +148,9 @@ class AdvancedUsageActivity : AppCompatActivity() {
     }
     private fun billingStatus():String{
         val p=UsageFeatureUtils.billingPeriod(this)
-        val used=UsageFeatureUtils.totalMobileWifi(this,p)
+        val used=UsageFeatureUtils.queryTotal(this,ConnectivityManager.TYPE_MOBILE,p.start,p.end)
         val limit=(prefs.getFloat("monthly_limit_gb",10f)*1024*1024*1024).toLong()
-        return "شروع چرخه: "+java.text.SimpleDateFormat("yyyy/MM/dd",java.util.Locale.US).format(java.util.Date(p.start))+"\nمصرف: "+UsageFeatureUtils.formatBytes(used)+" از "+UsageFeatureUtils.formatBytes(limit)
+        return "شروع چرخه: "+java.text.SimpleDateFormat("yyyy/MM/dd",java.util.Locale.US).format(java.util.Date(p.start))+"\nمصرف سیم‌کارت: "+UsageFeatureUtils.formatBytes(used)+" از "+UsageFeatureUtils.formatBytes(limit)
     }
     private fun anomalyStatus():String{
         val today=UsageFeatureUtils.totalMobileWifi(this,UsageFeatureUtils.today())
