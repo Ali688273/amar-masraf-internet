@@ -281,7 +281,7 @@ class MainActivity : AppCompatActivity() {
         val refreshButton = Button(this).apply {
             text = "↻ بروزرسانی آمار"
             setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#334155"))
+            setBackgroundColor(ThemeManager.color(this@MainActivity, "primary"))
             setOnClickListener { refreshUI() }
         }
         contentLayout.addView(refreshButton)
@@ -515,8 +515,8 @@ class MainActivity : AppCompatActivity() {
         }
         val rx = queryNetworkDirection(statsManager, netType, start, end, true)
         val tx = queryNetworkDirection(statsManager, netType, start, end, false)
-        layout.addView(makeTrafficBox("دانلود", formatBytes(rx), "#10B981"))
-        layout.addView(makeTrafficBox("آپلود", formatBytes(tx), "#3B82F6"))
+        layout.addView(makeTrafficBox("دانلود", formatBytes(rx), "download"))
+        layout.addView(makeTrafficBox("آپلود", formatBytes(tx), "upload"))
         card.addView(layout)
         return card
     }
@@ -536,7 +536,7 @@ class MainActivity : AppCompatActivity() {
                 text = value
                 textSize = 16f
                 typeface = Typeface.DEFAULT_BOLD
-                setTextColor(Color.parseColor(color))
+                setTextColor(ThemeManager.color(this@MainActivity, color))
                 gravity = Gravity.CENTER
                 setPadding(0, 8, 0, 0)
             }
