@@ -1,12 +1,16 @@
 package com.amarmasraf.internet
-import android.app.Activity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Bundle
 import java.text.SimpleDateFormat
 import java.util.*
 
-class CsvExportActivity:Activity(){
+class CsvExportActivity:AppCompatActivity(){
  private var pending=""
  private var permissionMissing=false
  override fun onCreate(b:Bundle?){super.onCreate(b);if(UsageFeatureUtils.hasUsageAccess(this))export()else showPermissionScreen()}
@@ -19,11 +23,29 @@ class CsvExportActivity:Activity(){
   setContentView(page)
  }
  private fun export(){
-  val p=UsageFeatureUtils.billingPeriod(this);val sdf=SimpleDateFormat("yyyy-MM-dd",Locale.US);val sb=StringBuilder("date,mobile_bytes,wifi_bytes,total_bytes\n")
+  val page=android.widget.LinearLayout(this).apply{orientation=android.widget.LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER;setPadding(24,30,24,30)}
+  page.addView(android.widget.TextView(this).apply{text="در حال آماده‌سازی گزارش CSV…";textSize=16f;gravity=android.view.Gravity.CENTER})
+  setContentView(page)
+  lifecycleScope.launch{
+   pending=withContext(Dispatchers.IO){buildCsv()}
+   if(isFinishing||isDestroyed)return@launch
+   startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="text/csv";putExtra(Intent.EXTRA_TITLE,"internet_usage.csv")},9002)
+  }
+ }
+ private fun buildCsv():String{
+  val p=UsageFeatureUtils.billingPeriod(this)
+  val sdf=SimpleDateFormat("yyyy-MM-dd",Locale.US)
+  val sb=StringBuilder("date,mobile_bytes,wifi_bytes,total_bytes\n")
   val c=Calendar.getInstance().apply{timeInMillis=p.start}
-  while(c.timeInMillis<p.end){val s=c.timeInMillis;c.add(Calendar.DAY_OF_YEAR,1);val e=minOf(c.timeInMillis,p.end);val m=UsageFeatureUtils.queryTotal(this,ConnectivityManager.TYPE_MOBILE,s,e);val w=UsageFeatureUtils.queryTotal(this,ConnectivityManager.TYPE_WIFI,s,e);sb.append(sdf.format(Date(s))).append(',').append(m).append(',').append(w).append(',').append(m+w).append('\n')}
-  pending=sb.toString()
-  startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="text/csv";putExtra(Intent.EXTRA_TITLE,"internet_usage.csv")},9002)
+  while(c.timeInMillis<p.end){
+   val s=c.timeInMillis
+   c.add(Calendar.DAY_OF_YEAR,1)
+   val e=minOf(c.timeInMillis,p.end)
+   val m=UsageFeatureUtils.queryTotal(this,ConnectivityManager.TYPE_MOBILE,s,e)
+   val w=UsageFeatureUtils.queryTotal(this,ConnectivityManager.TYPE_WIFI,s,e)
+   sb.append(sdf.format(Date(s))).append(',').append(m).append(',').append(w).append(',').append(m+w).append('\n')
+  }
+  return sb.toString()
  }
  override fun onActivityResult(r:Int,c:Int,d:Intent?){
   super.onActivityResult(r,c,d)
