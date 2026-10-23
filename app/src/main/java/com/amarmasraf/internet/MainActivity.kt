@@ -342,7 +342,7 @@ class MainActivity : AppCompatActivity() {
         val remaining = (limitBytes - used).coerceAtLeast(0L)
         val elapsedDays = ((now - period.start).coerceAtLeast(1L) / 86_400_000.0).coerceAtLeast(0.25)
         val dailyAverage = used / elapsedDays
-        val estimateDays = if (dailyAverage > 0L) remaining / dailyAverage else null
+        val estimateDays = if (dailyAverage > 0.0) remaining / dailyAverage else null
         val dailyBudgetBytes = prefs.getInt("daily_budget_mb", 500).coerceAtLeast(1).toLong() * 1024L * 1024L
         val todayUsed = UsageFeatureUtils.totalMobileWifi(this, UsageFeatureUtils.Period(getDayStart(0), now))
         val dailyPercent = (todayUsed.toDouble() * 100.0 / dailyBudgetBytes).toInt().coerceIn(0, 100)
@@ -378,7 +378,7 @@ class MainActivity : AppCompatActivity() {
             })
             box.addView(TextView(context).apply {
                 text = if (estimateDays == null) "پیش‌بینی پایان بسته: پس از ثبت مصرف بیشتر قابل محاسبه است"
-                else if (estimateDays <= 0L) "پیش‌بینی: با روند فعلی سقف بسته امروز پر می‌شود"
+                else if (estimateDays <= 0.0) "پیش‌بینی: با روند فعلی سقف بسته امروز پر می‌شود"
                 else "پیش‌بینی پایان بسته: حدود ${estimateDays.coerceAtMost(3650.0).toInt()} روز دیگر با میانگین مصرف فعلی"
                 textSize = 12f
                 setTextColor(ThemeManager.color(this@MainActivity, "accent"))
