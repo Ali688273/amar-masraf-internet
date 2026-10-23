@@ -829,7 +829,7 @@ class MainActivity : AppCompatActivity() {
         val alarm = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, UsageAlertReceiver::class.java)
         val pending = PendingIntent.getBroadcast(this, 7001, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        if (!prefs.getBoolean("notifications", true)) {
+        if (!prefs.getBoolean("notifications_configured", false) || !prefs.getBoolean("notifications", false)) {
             alarm.cancel(pending)
             return
         }
