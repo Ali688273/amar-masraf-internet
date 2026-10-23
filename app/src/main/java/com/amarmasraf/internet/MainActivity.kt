@@ -397,9 +397,9 @@ class MainActivity : AppCompatActivity() {
                 setTextColor(ThemeManager.color(this@MainActivity, "muted"))
             })
             box.addView(TextView(context).apply {
-                text = if (estimateDays == null) "پیش‌بینی پایان بسته: پس از ثبت مصرف بیشتر قابل محاسبه است"
-                else if (estimateDays <= 0.0) "پیش‌بینی: با روند فعلی سقف بسته امروز پر می‌شود"
-                else "پیش‌بینی پایان بسته: حدود ${estimateDays.coerceAtMost(3650.0).toInt()} روز دیگر با میانگین مصرف فعلی"
+                text = if (estimateDays == null) LanguageCalendar.text(this@MainActivity, "پیش‌بینی پایان بسته: پس از ثبت مصرف بیشتر قابل محاسبه است", "Plan-end forecast will be available after more usage data is collected.")
+                else if (estimateDays <= 0.0) LanguageCalendar.text(this@MainActivity, "پیش‌بینی: با روند فعلی سقف بسته امروز پر می‌شود", "Forecast: at the current rate, the data limit will be reached today.")
+                else LanguageCalendar.text(this@MainActivity, "پیش‌بینی پایان بسته: حدود ${estimateDays.coerceAtMost(3650.0).toInt()} روز دیگر با میانگین مصرف فعلی", "Estimated time to data limit: about ${estimateDays.coerceAtMost(3650.0).toInt()} days at the current average.")
                 textSize = 12f
                 setTextColor(ThemeManager.color(this@MainActivity, "accent"))
                 setPadding(0, 6, 0, 10)
@@ -710,7 +710,7 @@ class MainActivity : AppCompatActivity() {
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
         layout.addView(TextView(this).apply { this.text = LanguageCalendar.text(this@MainActivity, "مقایسه با دیروز", "Compared with yesterday"); textSize = 13f; setTextColor(ThemeManager.color(this@MainActivity, "muted")) })
         layout.addView(TextView(this).apply { this.text = text; textSize = 16f; typeface = Typeface.DEFAULT_BOLD; setTextColor(ThemeManager.color(this@MainActivity, "text")); setPadding(0, 8, 0, 0) })
-        layout.addView(TextView(this).apply { this.text = "امروز: ${formatBytes(today)}   |   دیروز: ${formatBytes(yesterday)}"; textSize = 11f; setTextColor(ThemeManager.color(this@MainActivity, "accent")); setPadding(0, 6, 0, 0) })
+        layout.addView(TextView(this).apply { this.text = LanguageCalendar.text(this@MainActivity, "امروز: ${formatBytes(today)}   |   دیروز: ${formatBytes(yesterday)}", "Today: ${formatBytes(today)}   |   Yesterday: ${formatBytes(yesterday)}"); textSize = 11f; setTextColor(ThemeManager.color(this@MainActivity, "accent")); setPadding(0, 6, 0, 0) })
         card.addView(layout)
         return card
     }
