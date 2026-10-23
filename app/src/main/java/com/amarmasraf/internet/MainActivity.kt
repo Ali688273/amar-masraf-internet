@@ -53,8 +53,6 @@ import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
-    private val TapsellKey = "skdkrkqgpljebkgtnhnksnjsogjohskdglotogpbbkgdrqscslsbfshkgnbfdgrdglkffr"
-    private val BannerZoneId = "66f7f24c084f7063d8091d37"
 
     private lateinit var downloadSpeedTv: TextView
     private lateinit var uploadSpeedTv: TextView
