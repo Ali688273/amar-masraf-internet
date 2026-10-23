@@ -10,6 +10,7 @@ import com.adivery.sdk.AdiveryAdListener
 import com.adivery.sdk.AdiveryBannerAdView
 import com.adivery.sdk.AdiveryNativeAdView
 import com.adivery.sdk.BannerSize
+import ir.tapsell.plus.AdHolder
 import ir.tapsell.plus.AdRequestCallback
 import ir.tapsell.plus.AdShowListener
 import ir.tapsell.plus.TapsellPlus
@@ -162,13 +163,46 @@ object AdsManager {
     }
 
     fun attachNativeAd(activity: Activity, container: FrameLayout) {
+        if (activity.isFinishing || activity.isDestroyed) return
+        if (tapsellReady) {
+            try {
+                val holder = TapsellPlus.createAdHolder(activity, container, ir.tapsell.plus.R.layout.native_banner)
+                TapsellPlus.requestNativeAd(activity, T_NATIVE_BANNER, object : AdRequestCallback() {
+                    override fun response(model: TapsellPlusAdModel) {
+                        if (activity.isFinishing || activity.isDestroyed) return
+                        try {
+                            TapsellPlus.showNativeAd(activity, model.responseId, holder, object : AdShowListener() {
+                                override fun onOpened(model: TapsellPlusAdModel) = Unit
+                                override fun onError(error: TapsellPlusErrorModel) {
+                                    Log.w(TAG, "Tapsell native ad failed; trying Adivery")
+                                    showAdiveryNative(activity, container)
+                                }
+                            })
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Tapsell native ad display threw", e)
+                            showAdiveryNative(activity, container)
+                        }
+                    }
+                    override fun error(message: String) {
+                        Log.w(TAG, "Tapsell native ad request failed: $message")
+                        if (!activity.isFinishing && !activity.isDestroyed) showAdiveryNative(activity, container)
+                    }
+                })
+                return
+            } catch (e: Exception) {
+                Log.w(TAG, "Tapsell native ad request threw", e)
+            }
+        }
+        showAdiveryNative(activity, container)
+    }
+
+    private fun showAdiveryNative(activity: Activity, container: FrameLayout) {
+        if (activity.isFinishing || activity.isDestroyed || BuildConfig.ADIVERY_APP_KEY.isBlank()) return
         try {
+            container.removeAllViews()
             val native = AdiveryNativeAdView(activity).apply {
-                layoutParams = FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-                setPlacementId(ADIVERY_NATIVE)
+                layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                setPlacementId(A_NATIVE)
                 setNativeAdLayout(R.layout.view_native_ad)
                 setListener(object : AdiveryAdListener() {
                     override fun onAdLoaded() { Log.d(TAG, "Adivery native ad loaded") }
@@ -181,56 +215,6 @@ object AdsManager {
             native.post { if (!activity.isFinishing && !activity.isDestroyed) native.loadAd() }
         } catch (e: Exception) {
             Log.w(TAG, "Adivery native ad setup failed", e)
-        }
-    }
-
-    /** Called at natural navigation points. Never shows more than one full-screen ad per five minutes. */
-    fun maybeShowInterstitial(activity: Activity, continueNavigation: () -> Unit) {
-        val now = System.currentTimeMillis()
-        if (now - lastFullScreenShownAt < FULL_SCREEN_COOLDOWN_MS) {
-            continueNavigation()
-            return
-        }
-
-        val responseId = tapsellInterstitialResponseId
-        if (tapsellReady && !responseId.isNullOrBlank()) {
-            tapsellInterstitialResponseId = null
-            try {
-                TapsellPlus.showInterstitialAd(activity, responseId, object : AdShowListener() {
-                    override fun onOpened(model: TapsellPlusAdModel) {
-                        lastFullScreenShownAt = System.currentTimeMillis()
-                    }
-                    override fun onClosed(model: TapsellPlusAdModel) {
-                        preloadTapsellInterstitial(activity)
-                    }
-                    override fun onError(error: TapsellPlusErrorModel) {
-                        Log.w(TAG, "Tapsell interstitial failed: $error")
-                        showAdiveryInterstitialIfReady(activity)
-                        preloadTapsellInterstitial(activity)
-                    }
-                })
-                lastFullScreenShownAt = now
-                continueNavigation()
-                return
-            } catch (e: Exception) {
-                Log.w(TAG, "Tapsell interstitial threw", e)
-            }
-        }
-
-        showAdiveryInterstitialIfReady(activity)
-        continueNavigation()
-    }
-
-    private fun showAdiveryInterstitialIfReady(activity: Activity) {
-        try {
-            if (Adivery.isLoaded(ADIVERY_INTERSTITIAL)) {
-                Adivery.showAd(ADIVERY_INTERSTITIAL)
-                lastFullScreenShownAt = System.currentTimeMillis()
-            } else {
-                Adivery.prepareInterstitialAd(activity, ADIVERY_INTERSTITIAL)
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Adivery interstitial failed", e)
         }
     }
 
