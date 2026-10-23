@@ -140,6 +140,24 @@ class MainActivity : AppCompatActivity() {
         scrollContainer.addView(mainLayout)
         rootLayout.addView(scrollContainer)
 
+        // Persistent bottom navigation for the app's main sections.
+        val navigation = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(6, 8, 6, 8)
+            setBackgroundColor(ThemeManager.color(this@MainActivity, "dark"))
+        }
+        navigation.addView(createNavigationButton("⌂\nخانه", "primary") {})
+        navigation.addView(createNavigationButton("▦\nبرنامه‌ها", "cardAlt") {
+            startActivity(Intent(this@MainActivity, AppUsageActivity::class.java))
+        })
+        navigation.addView(createNavigationButton("▥\nنمودار", "cardAlt") {
+            startActivity(Intent(this@MainActivity, ChartsActivity::class.java))
+        })
+        navigation.addView(createNavigationButton("⚙\nتنظیمات", "accent") {
+            startActivity(Intent(this@MainActivity, AdvancedUsageActivity::class.java))
+        })
+        rootLayout.addView(navigation)
+
         // Tapsell Banner Container at bottom
         bannerContainer = FrameLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
@@ -156,6 +174,23 @@ class MainActivity : AppCompatActivity() {
         scheduleDailyCheck()
         startSpeedChecker()
         initTapsell()
+    }
+
+    private fun createNavigationButton(label: String, role: String, action: () -> Unit): CardView {
+        return CardView(this).apply {
+            radius = 14f
+            setCardBackgroundColor(ThemeManager.color(this@MainActivity, role))
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(3, 0, 3, 0) }
+            setOnClickListener { action() }
+            addView(TextView(context).apply {
+                text = label
+                textSize = 11f
+                gravity = Gravity.CENTER
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(Color.WHITE)
+                setPadding(4, 9, 4, 9)
+            })
+        }
     }
 
     private fun initTapsell() {
@@ -450,7 +485,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, 0, 0, 12)
         })
         val days = if (period == 1) 7 else 30
-        for (day in minOf(days, 7) downTo 1) {
+        for (day in minOf(days, 30) downTo 1) {
             val (s, e) = dayRange(day)
             val bytes = queryNetworkTotal(statsManager, netType, s, e)
             val row = LinearLayout(this).apply {
@@ -459,7 +494,7 @@ class MainActivity : AppCompatActivity() {
                 setPadding(0, 5, 0, 5)
             }
             row.addView(TextView(this).apply {
-                text = if (day == 1) "امروز" else "$day روز پیش"
+                text = if (day == 1) "امروز" else "${day - 1} روز پیش"
                 textSize = 11f
                 setTextColor(ThemeManager.color(this@MainActivity, "soft"))
                 layoutParams = LinearLayout.LayoutParams(75, LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -528,7 +563,7 @@ class MainActivity : AppCompatActivity() {
     private fun createSettingsCard(): CardView {
         val card = CardView(this).apply {
             radius = 20f
-            setCardBackgroundColor(ThemeManager.color(this@MainActivity, "card"))
+            setCardBackgroundColor(ThemeManager.color(this@MainActivity, "cardAlt"))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
         }
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
@@ -564,7 +599,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showThemePicker() {
         val ids = ThemeManager.ids()
-        val labels = ids.map { ThemeManager.name(it) }.toTypedArray()
+        val labels = ids.map { "●  " + ThemeManager.name(it) }.toTypedArray()
         val current = ids.indexOf(ThemeManager.current(this))
         AlertDialog.Builder(this)
             .setTitle("انتخاب تم")
@@ -717,8 +752,12 @@ class MainActivity : AppCompatActivity() {
             1 -> { // Week
                 cal.add(Calendar.DAY_OF_YEAR, -7)
             }
-            2 -> { // Month
-                cal.add(Calendar.MONTH, -1)
+            2 -> { // Current calendar month, from the first day until now
+                cal.set(Calendar.DAY_OF_MONTH, 1)
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
             }
         }
         return Pair(cal.timeInMillis, endTime)
