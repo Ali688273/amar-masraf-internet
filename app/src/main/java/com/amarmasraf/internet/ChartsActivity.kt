@@ -114,7 +114,7 @@ class ChartsActivity:AppCompatActivity(){
   data.indices.forEach{i->
    val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL;setPadding(0,3,0,3)}
    val offset=i-(data.size-1)
-   row.addView(TextView(this).apply{text=when(mode){0->if(offset==0)"امروز" else (-offset).toString()+" روز پیش";1->SimpleDateFormat("MM/yyyy",Locale.US).format(monthDate(offset));else->SimpleDateFormat("yyyy",Locale.US).format(yearDate(offset))};textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));layoutParams=LinearLayout.LayoutParams(62,-2)})
+   row.addView(TextView(this).apply{text=when(mode){0->if(offset==0)"امروز" else (-offset).toString()+" روز پیش";1->LanguageCalendar.monthYear(this@ChartsActivity, monthDate(offset).time);else->LanguageCalendar.year(this@ChartsActivity, yearDate(offset).time)};textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));layoutParams=LinearLayout.LayoutParams(62,-2)})
    row.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply{max=1000;progress=((data[i].toDouble()/maxValue)*1000).toInt().coerceIn(0,1000);progressTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, if (title == "سیم‌کارت") "download" else "upload"));progressBackgroundTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, "background"));layoutParams=LinearLayout.LayoutParams(0,14,1f).apply{setMargins(4,0,4,0)}})
    row.addView(TextView(this).apply{text=format(data[i]);textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"))})
    box.addView(row)
