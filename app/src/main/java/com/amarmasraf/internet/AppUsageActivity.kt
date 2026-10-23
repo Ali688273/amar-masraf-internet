@@ -16,9 +16,9 @@ class AppUsageActivity:AppCompatActivity(){
  private var sort=0; private var all=emptyList<Item>()
  override fun onCreate(b:Bundle?){super.onCreate(b);build()}
  private fun build(){
-  val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,22,18,30);setBackgroundColor(android.graphics.Color.parseColor("#0F172A"))}
-  root.addView(TextView(this).apply{text="📱 مصرف برنامه‌ها";textSize=22f;setTextColor(android.graphics.Color.WHITE);setPadding(0,0,0,15)})
-  search=EditText(this).apply{hint="جستجوی نام یا package";setTextColor(android.graphics.Color.WHITE);setHintTextColor(android.graphics.Color.GRAY)}
+  val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,22,18,30);setBackgroundColor(ThemeManager.color(this@AppUsageActivity, "background"))}
+  root.addView(TextView(this).apply{text="📱 مصرف برنامه‌ها";textSize=22f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(0,0,0,15)})
+  search=EditText(this).apply{hint="جستجوی نام یا package";setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setHintTextColor(ThemeManager.color(this@AppUsageActivity, "muted"))}
   root.addView(search)
   val sorts=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
   listOf("بیشترین مصرف","نام","کمترین مصرف").forEachIndexed{i,t->sorts.addView(Button(this).apply{text=t;setOnClickListener{sort=i;render()}})}
@@ -40,6 +40,6 @@ class AppUsageActivity:AppCompatActivity(){
   val q=search.text.toString().trim()
   val items=all.filter{q.isEmpty()||it.name.contains(q,true)||it.pkg.contains(q,true)}.let{when(sort){1->it.sortedBy{it.name.lowercase()};2->it.sortedBy{it.bytes};else->it.sortedByDescending{it.bytes}}}
   list.removeAllViews()
-  items.forEach{item->list.addView(CardView(this).apply{radius=16f;setCardBackgroundColor(android.graphics.Color.parseColor("#1E293B"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,5,0,5)};addView(TextView(context).apply{text=item.name+"\n"+item.pkg+"\n"+UsageFeatureUtils.formatBytes(item.bytes);textSize=13f;setTextColor(android.graphics.Color.WHITE);setPadding(18,15,18,15)})})}
+  items.forEachIndexed{index,item->list.addView(CardView(this).apply{radius=16f;setCardBackgroundColor(ThemeManager.color(this@AppUsageActivity, if(index%2==0) "card" else "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,5,0,5)};addView(TextView(context).apply{text=item.name+"\n"+item.pkg+"\n"+UsageFeatureUtils.formatBytes(item.bytes);textSize=13f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(18,15,18,15)})})}
  }
 }
