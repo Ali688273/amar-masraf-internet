@@ -7,7 +7,6 @@ import kotlinx.coroutines.withContext
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Bundle
-import java.text.SimpleDateFormat
 import java.util.*
 
 class CsvExportActivity:AppCompatActivity(){
@@ -34,7 +33,6 @@ class CsvExportActivity:AppCompatActivity(){
  }
  private fun buildCsv():String{
   val p=UsageFeatureUtils.billingPeriod(this)
-  val sdf=SimpleDateFormat("yyyy-MM-dd",Locale.US)
   val sb=StringBuilder("date,mobile_bytes,wifi_bytes,total_bytes\n")
   val c=Calendar.getInstance().apply{timeInMillis=p.start}
   while(c.timeInMillis<p.end){
@@ -43,7 +41,7 @@ class CsvExportActivity:AppCompatActivity(){
    val e=minOf(c.timeInMillis,p.end)
    val m=UsageFeatureUtils.queryTotal(this,ConnectivityManager.TYPE_MOBILE,s,e)
    val w=UsageFeatureUtils.queryTotal(this,ConnectivityManager.TYPE_WIFI,s,e)
-   sb.append(sdf.format(Date(s))).append(',').append(m).append(',').append(w).append(',').append(m+w).append('\n')
+   sb.append(LanguageCalendar.date(this, s, "-")).append(',').append(m).append(',').append(w).append(',').append(m+w).append('\n')
   }
   return sb.toString()
  }
