@@ -118,26 +118,26 @@ object AdsManager {
                                     override fun onOpened(model: TapsellPlusAdModel) = Unit
                                     override fun onError(error: TapsellPlusErrorModel) {
                                         Log.w(TAG, "Tapsell banner display failed")
-                                        if (tryInstantBanner) requestTapsellBannerForZone(activity, container, T_INSTANT_BANNER, false)
+                                        if (tryInstantBanner) requestTapsellBannerForZone(activity, container, TAPSELL_INSTANT_BANNER, false)
                                         else showAdiveryBanner(activity, container)
                                     }
                                 })
                         } catch (e: Exception) {
                             Log.w(TAG, "Tapsell banner display threw", e)
-                            if (tryInstantBanner) requestTapsellBannerForZone(activity, container, T_INSTANT_BANNER, false)
+                            if (tryInstantBanner) requestTapsellBannerForZone(activity, container, TAPSELL_INSTANT_BANNER, false)
                             else showAdiveryBanner(activity, container)
                         }
                     }
                     override fun error(message: String) {
                         Log.w(TAG, "Tapsell banner request failed: $message")
                         if (activity.isFinishing || activity.isDestroyed) return
-                        if (tryInstantBanner) requestTapsellBannerForZone(activity, container, T_INSTANT_BANNER, false)
+                        if (tryInstantBanner) requestTapsellBannerForZone(activity, container, TAPSELL_INSTANT_BANNER, false)
                         else showAdiveryBanner(activity, container)
                     }
                 })
         } catch (e: Exception) {
             Log.w(TAG, "Tapsell banner request threw", e)
-            if (tryInstantBanner) requestTapsellBannerForZone(activity, container, T_INSTANT_BANNER, false)
+            if (tryInstantBanner) requestTapsellBannerForZone(activity, container, TAPSELL_INSTANT_BANNER, false)
             else showAdiveryBanner(activity, container)
         }
     }
@@ -250,7 +250,7 @@ object AdsManager {
             container.removeAllViews()
             val native = AdiveryNativeAdView(activity).apply {
                 layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-                setPlacementId(A_NATIVE)
+                setPlacementId(ADIVERY_NATIVE)
                 setNativeAdLayout(R.layout.view_native_ad)
                 setListener(object : AdiveryAdListener() {
                     override fun onAdLoaded() { Log.d(TAG, "Adivery native ad loaded") }
