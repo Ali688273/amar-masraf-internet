@@ -21,7 +21,7 @@ class ChartsActivity:AppCompatActivity(){
  override fun onCreate(b:Bundle?){super.onCreate(b);build()}
  private fun build(){
   root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,25,18,30);setBackgroundColor(ThemeManager.color(this@ChartsActivity, "background"))}
-  root.addView(TextView(this).apply{text="📊 نمودار و تاریخچه مصرف";textSize=22f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE);setPadding(0,0,0,15)})
+  root.addView(TextView(this).apply{text="📊 نمودار و تاریخچه مصرف";textSize=22f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(0,0,0,15)})
   val actions=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
   actions.addView(Button(this).apply{text="⚙ امکانات";setOnClickListener{startActivity(Intent(this@ChartsActivity,AdvancedUsageActivity::class.java))}})
   actions.addView(Button(this).apply{text="📄 CSV";setOnClickListener{startActivity(Intent(this@ChartsActivity,CsvExportActivity::class.java))}})
@@ -40,7 +40,7 @@ class ChartsActivity:AppCompatActivity(){
  private fun tab(title:String,selected:Boolean,action:()->Unit)=CardView(this).apply{
   radius=18f;setCardBackgroundColor(if(selected)ThemeManager.color(this@ChartsActivity, "primary")else ThemeManager.color(this@ChartsActivity, "card"))
   layoutParams=LinearLayout.LayoutParams(0,-2,1f).apply{setMargins(3,0,3,0)};setOnClickListener{action()}
-  addView(TextView(context).apply{text=title;textSize=12f;setTextColor(Color.WHITE);gravity=Gravity.CENTER;setPadding(8,14,8,14)})
+  addView(TextView(context).apply{text=title;textSize=12f;setTextColor(if(selected) Color.WHITE else ThemeManager.color(this@ChartsActivity, "text"));gravity=Gravity.CENTER;setPadding(8,14,8,14)})
  }
  private fun createHourly(m:NetworkStatsManager):CardView{
   val card=CardView(this).apply{radius=20f;setCardBackgroundColor(ThemeManager.color(this@ChartsActivity, "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,8,0,18)}}
@@ -60,7 +60,7 @@ class ChartsActivity:AppCompatActivity(){
  private fun createChart(m:NetworkStatsManager,type:Int,title:String,color:String):CardView{
   val card=CardView(this).apply{radius=20f;setCardBackgroundColor(ThemeManager.color(this@ChartsActivity, "card"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,18)}}
   val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,18,18,18)}
-  box.addView(TextView(this).apply{text=title;textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE)})
+  box.addView(TextView(this).apply{text=title;textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"))})
   val ranges=when(mode){0->(89 downTo 0).map{dayRange(-it)};1->(23 downTo 0).map{monthRange(-it)};else->(9 downTo 0).map{yearRange(-it)}}
   val data=ranges.map{query(m,type,it.first,it.second)};val max=data.maxOrNull()?.coerceAtLeast(1L)?:1L
   ranges.indices.forEach{i->
