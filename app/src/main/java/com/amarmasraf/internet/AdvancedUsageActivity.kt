@@ -54,18 +54,18 @@ class AdvancedUsageActivity : AppCompatActivity() {
             setOnClickListener { showCalendarPicker() }
         })
 
-        val monthlyLimit=EditText(this).apply { hint="حجم بسته در چرخه قبض (گیگابایت)"; setText(prefs.getFloat("monthly_limit_gb",10f).toString()); inputType=8194; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        val monthlyLimit=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "حجم بسته در چرخه قبض (گیگابایت)", "Allowance per billing cycle (GB)"); setText(prefs.getFloat("monthly_limit_gb",10f).toString()); inputType=8194; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(monthlyLimit)
-        val warning=EditText(this).apply { hint="درصد هشدار سقف بسته (۱ تا ۱۰۰)"; setText(prefs.getInt("warning_percent",80).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        val warning=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "درصد هشدار سقف بسته (۱ تا ۱۰۰)", "Data limit alert (1–100%)"); setText(prefs.getInt("warning_percent",80).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(warning)
         val notifications=Switch(this).apply { text=LanguageCalendar.text(this, "فعال بودن هشدارهای مصرف", "Enable usage alerts"); setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); isChecked=prefs.getBoolean("notifications",true) }
         root.addView(notifications)
 
-        val daily=EditText(this).apply { hint="بودجه روزانه (مگابایت)"; setText(prefs.getInt("daily_budget_mb",500).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        val daily=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "بودجه روزانه (مگابایت)", "Daily budget (MB)"); setText(prefs.getInt("daily_budget_mb",500).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(daily)
-        val billing=EditText(this).apply { hint="روز شروع چرخه قبض، ۱ تا ۲۸"; setText(prefs.getInt("billing_start_day",1).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        val billing=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "روز شروع چرخه قبض، ۱ تا ۲۸", "Billing cycle start day, 1–28"); setText(prefs.getInt("billing_start_day",1).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(billing)
-        val anomaly=EditText(this).apply { hint="ضریب هشدار مصرف غیرعادی"; setText(prefs.getFloat("anomaly_multiplier",2f).toString()); inputType=8194; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        val anomaly=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "ضریب هشدار مصرف غیرعادی", "Unusual usage multiplier"); setText(prefs.getFloat("anomaly_multiplier",2f).toString()); inputType=8194; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(anomaly)
 
         root.addView(Button(this).apply {
