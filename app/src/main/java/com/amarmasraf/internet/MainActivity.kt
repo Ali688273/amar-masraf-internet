@@ -65,12 +65,17 @@ class MainActivity : AppCompatActivity() {
     private var lastTime: Long = 0
     private val speedHandler = Handler(Looper.getMainLooper())
     private var speedRunnable: Runnable? = null
+    private var appliedTheme: String? = null
     private val prefs by lazy { getSharedPreferences("settings", Context.MODE_PRIVATE) }
     private val warningPercent get() = prefs.getInt("warning_percent", 80)
     private val monthlyLimitGb get() = prefs.getFloat("monthly_limit_gb", 10f)
 
     override fun onResume() {
         super.onResume()
+        if (::contentLayout.isInitialized && appliedTheme != ThemeManager.current(this)) {
+            recreate()
+            return
+        }
         if (!::contentLayout.isInitialized && checkUsageStatsPermission()) {
             recreate()
         }
@@ -78,6 +83,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        appliedTheme = ThemeManager.current(this)
 
         val rootLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -133,6 +139,12 @@ class MainActivity : AppCompatActivity() {
                 setPadding(0, 50, 0, 50)
             }
             mainLayout.addView(permissionNotice)
+            mainLayout.addView(Button(this).apply {
+                text = "باز کردن تنظیمات دسترسی مصرف"
+                setTextColor(Color.WHITE)
+                setBackgroundColor(ThemeManager.color(this@MainActivity, "primary"))
+                setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+            })
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         } else {
             // Live Speed Card
