@@ -89,10 +89,21 @@ class AdvancedUsageActivity : AppCompatActivity() {
             setTextColor(android.graphics.Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "upload"))
             setOnClickListener {
+                prefs.edit().putBoolean("live_usage_enabled", true).apply()
                 if(android.os.Build.VERSION.SDK_INT>=33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
                     requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),8001)
                 androidx.core.content.ContextCompat.startForegroundService(this@AdvancedUsageActivity,Intent(this@AdvancedUsageActivity,UsageMonitorService::class.java))
                 Toast.makeText(this@AdvancedUsageActivity,"نمایش مصرف در نوار اعلان فعال شد",Toast.LENGTH_SHORT).show()
+            }
+        })
+        root.addView(Button(this).apply {
+            text="⏹ خاموش‌کردن نمایش مصرف در نوار اعلان"
+            setTextColor(android.graphics.Color.WHITE)
+            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
+            setOnClickListener {
+                prefs.edit().putBoolean("live_usage_enabled", false).apply()
+                stopService(Intent(this@AdvancedUsageActivity, UsageMonitorService::class.java))
+                Toast.makeText(this@AdvancedUsageActivity,"نمایش مصرف در نوار اعلان خاموش شد",Toast.LENGTH_SHORT).show()
             }
         })
         setContentView(ScrollView(this).apply { addView(root) })
