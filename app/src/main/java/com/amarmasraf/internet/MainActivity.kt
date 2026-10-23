@@ -60,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var uploadSpeedTv: TextView
     private lateinit var contentLayout: LinearLayout
     private lateinit var bannerContainer: FrameLayout
+    private lateinit var nativeAdContainer: FrameLayout
 
     private var currentTab = 0 // 0: Mobile, 1: WiFi
     private var currentPeriod = 0 // 0: Today, 1: Week, 2: Month
@@ -78,6 +79,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        AdsManager.onMainResume(this)
         val selectedLanguage = prefs.getString("language", "system")
         val selectedCalendar = prefs.getString("calendar", "solar")
         if (::contentLayout.isInitialized && (appliedLanguage != selectedLanguage || appliedCalendar != selectedCalendar)) {
@@ -176,6 +178,13 @@ class MainActivity : AppCompatActivity() {
             }
             mainLayout.addView(contentLayout)
 
+            nativeAdContainer = FrameLayout(this).apply {
+                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                    topMargin = (12 * resources.displayMetrics.density).toInt()
+                }
+            }
+            mainLayout.addView(nativeAdContainer)
+
             refreshUI()
         }
 
@@ -192,13 +201,19 @@ class MainActivity : AppCompatActivity() {
             scrollContainer.smoothScrollTo(0, 0)
         })
         navigation.addView(createNavigationButton("▦\n" + LanguageCalendar.text(this, "برنامه‌ها", "Apps"), "cardAlt") {
-            startActivity(Intent(this@MainActivity, AppUsageActivity::class.java))
+            AdsManager.maybeShowInterstitial(this@MainActivity) {
+                startActivity(Intent(this@MainActivity, AppUsageActivity::class.java))
+            }
         })
         navigation.addView(createNavigationButton("▥\n" + LanguageCalendar.text(this, "نمودار", "Charts"), "cardAlt") {
-            startActivity(Intent(this@MainActivity, ChartsActivity::class.java))
+            AdsManager.maybeShowInterstitial(this@MainActivity) {
+                startActivity(Intent(this@MainActivity, ChartsActivity::class.java))
+            }
         })
         navigation.addView(createNavigationButton("⚙\n" + LanguageCalendar.text(this, "تنظیمات", "Settings"), "primary") {
-            startActivity(Intent(this@MainActivity, AdvancedUsageActivity::class.java))
+            AdsManager.maybeShowInterstitial(this@MainActivity) {
+                startActivity(Intent(this@MainActivity, AdvancedUsageActivity::class.java))
+            }
         })
         rootLayout.addView(navigation)
 
@@ -238,30 +253,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initTapsell() {
-        loadBannerAd()
+        AdsManager.attachPersistentBanner(this, bannerContainer)
+        if (::nativeAdContainer.isInitialized) AdsManager.attachNativeAd(this, nativeAdContainer)
+        AdsManager.preloadTapsellInterstitial(this)
     }
 
-    private fun loadBannerAd() {
-        TapsellPlus.requestStandardBannerAd(
-            this,
-            BannerZoneId,
-            TapsellPlusBannerType.BANNER_320x50,
-            object : AdRequestCallback() {
-                override fun response(model: TapsellPlusAdModel) {
-                    TapsellPlus.showStandardBannerAd(
-                        this@MainActivity,
-                        model.responseId,
-                        bannerContainer,
-                        object : AdShowListener() {
-                            override fun onOpened(model: TapsellPlusAdModel) {}
-                            override fun onError(error: TapsellPlusErrorModel) {
-                                Log.e("TapsellShow", "Error: ${error.errorMessage}")
-                            }
-                        }
-                    )
-                }
-            }
-        )
+    override fun onPause() {
+        AdsManager.onMainPause(this)
+        super.onPause()
     }
 
     private fun refreshUI() {
