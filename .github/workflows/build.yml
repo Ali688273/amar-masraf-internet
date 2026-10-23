@@ -2,6 +2,8 @@ name: Build Signed Release APK
 
 # بیلد خودکار روی push خاموش است؛ فقط با اجرای دستی شروع می‌شود.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
