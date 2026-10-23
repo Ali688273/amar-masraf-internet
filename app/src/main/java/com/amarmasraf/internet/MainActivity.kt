@@ -321,7 +321,7 @@ class MainActivity : AppCompatActivity() {
         val limitBytes = (monthlyLimitGb.coerceAtLeast(0.1f) * 1024.0 * 1024.0 * 1024.0).toLong()
         val percent = if (limitBytes > 0L) (used.toDouble() * 100.0 / limitBytes).toInt() else 0
         val remaining = (limitBytes - used).coerceAtLeast(0L)
-        val elapsedDays = ((now - period.start).coerceAtLeast(1L) / 86_400_000.0).coerceAtLeast(1.0)
+        val elapsedDays = ((now - period.start).coerceAtLeast(1L) / 86_400_000.0).coerceAtLeast(0.25)
         val dailyAverage = used / elapsedDays
         val estimateDays = if (dailyAverage > 0L) remaining / dailyAverage else null
         val dailyBudgetBytes = prefs.getInt("daily_budget_mb", 500).coerceAtLeast(1).toLong() * 1024L * 1024L
