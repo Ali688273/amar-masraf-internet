@@ -20,7 +20,7 @@ class ChartsActivity:AppCompatActivity(){
  private lateinit var root:LinearLayout
  override fun onCreate(b:Bundle?){super.onCreate(b);build()}
  private fun build(){
-  root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,25,18,30);setBackgroundColor(Color.parseColor("#0F172A"))}
+  root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,25,18,30);setBackgroundColor(ThemeManager.color(this@ChartsActivity, "background"))}
   root.addView(TextView(this).apply{text="📊 نمودار و تاریخچه مصرف";textSize=22f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE);setPadding(0,0,0,15)})
   val actions=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
   actions.addView(Button(this).apply{text="⚙ امکانات";setOnClickListener{startActivity(Intent(this@ChartsActivity,AdvancedUsageActivity::class.java))}})
@@ -38,12 +38,12 @@ class ChartsActivity:AppCompatActivity(){
   setContentView(ScrollView(this).apply{addView(root)})
  }
  private fun tab(title:String,selected:Boolean,action:()->Unit)=CardView(this).apply{
-  radius=18f;setCardBackgroundColor(if(selected)Color.parseColor("#4F46E5")else Color.parseColor("#1E293B"))
+  radius=18f;setCardBackgroundColor(if(selected)ThemeManager.color(this@ChartsActivity, "primary")else ThemeManager.color(this@ChartsActivity, "card"))
   layoutParams=LinearLayout.LayoutParams(0,-2,1f).apply{setMargins(3,0,3,0)};setOnClickListener{action()}
   addView(TextView(context).apply{text=title;textSize=12f;setTextColor(Color.WHITE);gravity=Gravity.CENTER;setPadding(8,14,8,14)})
  }
  private fun createHourly(m:NetworkStatsManager):CardView{
-  val card=CardView(this).apply{radius=20f;setCardBackgroundColor(Color.parseColor("#1E293B"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,8,0,18)}}
+  val card=CardView(this).apply{radius=20f;setCardBackgroundColor(ThemeManager.color(this@ChartsActivity, "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,8,0,18)}}
   val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,18,18,18)}
   box.addView(TextView(this).apply{text="⏱ مصرف ساعتی امروز";textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE)})
   val values=(0..23).map{hour->hourRange(hour).let{query(m,ConnectivityManager.TYPE_MOBILE,it.first,it.second)+query(m,ConnectivityManager.TYPE_WIFI,it.first,it.second)}}
@@ -51,14 +51,14 @@ class ChartsActivity:AppCompatActivity(){
   values.forEachIndexed{h,v->
    val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL}
    row.addView(TextView(this).apply{text=String.format(Locale.US,"%02d:00",h);setTextColor(Color.LTGRAY);textSize=9f;layoutParams=LinearLayout.LayoutParams(48,-2)})
-   row.addView(TextView(this).apply{text=" ".repeat((v.toDouble()/max*24).toInt().coerceAtLeast(if(v>0)1 else 0));setTextColor(Color.TRANSPARENT);setBackgroundColor(Color.parseColor("#F59E0B"));layoutParams=LinearLayout.LayoutParams(0,15,1f).apply{setMargins(4,3,4,3)}})
+   row.addView(TextView(this).apply{text=" ".repeat((v.toDouble()/max*24).toInt().coerceAtLeast(if(v>0)1 else 0));setTextColor(Color.TRANSPARENT);setBackgroundColor(ThemeManager.color(this@ChartsActivity, "accent"));layoutParams=LinearLayout.LayoutParams(0,15,1f).apply{setMargins(4,3,4,3)}})
    row.addView(TextView(this).apply{text=format(v);setTextColor(Color.LTGRAY);textSize=8f})
    box.addView(row)
   }
   card.addView(box);return card
  }
  private fun createChart(m:NetworkStatsManager,type:Int,title:String,color:String):CardView{
-  val card=CardView(this).apply{radius=20f;setCardBackgroundColor(Color.parseColor("#1E293B"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,18)}}
+  val card=CardView(this).apply{radius=20f;setCardBackgroundColor(ThemeManager.color(this@ChartsActivity, "card"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,18)}}
   val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,18,18,18)}
   box.addView(TextView(this).apply{text=title;textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE)})
   val ranges=when(mode){0->(89 downTo 0).map{dayRange(-it)};1->(23 downTo 0).map{monthRange(-it)};else->(9 downTo 0).map{yearRange(-it)}}
@@ -66,15 +66,15 @@ class ChartsActivity:AppCompatActivity(){
   ranges.indices.forEach{i->
    val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL;setPadding(0,3,0,3)}
    val offset=when(mode){0->i-89;1->i-23;else->i-9}
-   row.addView(TextView(this).apply{text=when(mode){0->if(offset==0)"امروز" else (-offset).toString()+" روز پیش";1->SimpleDateFormat("MM/yyyy",Locale.US).format(monthDate(offset));else->SimpleDateFormat("yyyy",Locale.US).format(yearDate(offset))};textSize=8f;setTextColor(Color.parseColor("#94A3B8"));layoutParams=LinearLayout.LayoutParams(62,-2)})
-   row.addView(TextView(this).apply{text=" ".repeat((data[i].toDouble()/max*22).toInt().coerceAtLeast(if(data[i]>0)1 else 0));setTextColor(Color.TRANSPARENT);setBackgroundColor(Color.parseColor(color));layoutParams=LinearLayout.LayoutParams(0,14,1f).apply{setMargins(4,0,4,0)}})
+   row.addView(TextView(this).apply{text=when(mode){0->if(offset==0)"امروز" else (-offset).toString()+" روز پیش";1->SimpleDateFormat("MM/yyyy",Locale.US).format(monthDate(offset));else->SimpleDateFormat("yyyy",Locale.US).format(yearDate(offset))};textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));layoutParams=LinearLayout.LayoutParams(62,-2)})
+   row.addView(TextView(this).apply{text=" ".repeat((data[i].toDouble()/max*22).toInt().coerceAtLeast(if(data[i]>0)1 else 0));setTextColor(Color.TRANSPARENT);setBackgroundColor(ThemeManager.color(this@ChartsActivity, if (title == "سیم‌کارت") "download" else "upload"));layoutParams=LinearLayout.LayoutParams(0,14,1f).apply{setMargins(4,0,4,0)}})
    row.addView(TextView(this).apply{text=format(data[i]);textSize=8f;setTextColor(Color.LTGRAY)})
    box.addView(row)
   }
   card.addView(box);return card
  }
  private fun summary(m:NetworkStatsManager)=CardView(this).apply{
-  radius=20f;setCardBackgroundColor(Color.parseColor("#1E293B"));layoutParams=LinearLayout.LayoutParams(-1,-2)
+  radius=20f;setCardBackgroundColor(ThemeManager.color(this@ChartsActivity, "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2)
   val p=when(mode){0->dayRange(0);1->monthRange(0);else->yearRange(0)}
   val a=query(m,ConnectivityManager.TYPE_MOBILE,p.first,p.second);val w=query(m,ConnectivityManager.TYPE_WIFI,p.first,p.second)
   addView(TextView(context).apply{text="مقایسه بازه فعلی\nسیم‌کارت: "+format(a)+"\nWi‑Fi: "+format(w)+"\nمجموع: "+format(a+w);textSize=14f;setTextColor(Color.WHITE);setPadding(18,18,18,18)})
