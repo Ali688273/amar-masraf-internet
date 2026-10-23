@@ -21,10 +21,10 @@ class AdvancedUsageActivity : AppCompatActivity() {
         root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(20,25,20,30)
-            setBackgroundColor(android.graphics.Color.parseColor("#0F172A"))
+            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "background"))
         }
         root.addView(TextView(this).apply {
-            text="⚙️ امکانات پیشرفته مصرف"; textSize=22f; setTextColor(android.graphics.Color.WHITE); setPadding(0,0,0,15)
+            text="⚙️ امکانات پیشرفته مصرف"; textSize=22f; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setPadding(0,0,0,15)
         })
 
         val daily=EditText(this).apply { hint="بودجه روزانه (مگابایت)"; setText(prefs.getInt("daily_budget_mb",500).toString()); inputType=2 }
@@ -36,6 +36,8 @@ class AdvancedUsageActivity : AppCompatActivity() {
 
         root.addView(Button(this).apply {
             text="ذخیره تنظیمات"
+            setTextColor(android.graphics.Color.WHITE)
+            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
             setOnClickListener {
                 prefs.edit()
                     .putInt("daily_budget_mb",daily.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 500)
@@ -54,14 +56,20 @@ class AdvancedUsageActivity : AppCompatActivity() {
 
         root.addView(Button(this).apply {
             text="🔎 جستجو و مرتب‌سازی برنامه‌ها"
+            setTextColor(android.graphics.Color.WHITE)
+            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "accent"))
             setOnClickListener { startActivity(Intent(this@AdvancedUsageActivity,AppUsageActivity::class.java)) }
         })
         root.addView(Button(this).apply {
             text="📄 خروجی CSV"
+            setTextColor(android.graphics.Color.WHITE)
+            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
             setOnClickListener { startActivity(Intent(this@AdvancedUsageActivity,CsvExportActivity::class.java)) }
         })
         root.addView(Button(this).apply {
             text="🔔 فعال‌سازی نمایش مصرف در نوار اعلان"
+            setTextColor(android.graphics.Color.WHITE)
+            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "upload"))
             setOnClickListener {
                 if(android.os.Build.VERSION.SDK_INT>=33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
                     requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),8001)
@@ -73,10 +81,10 @@ class AdvancedUsageActivity : AppCompatActivity() {
     }
 
     private fun card(title:String,body:String)=CardView(this).apply{
-        radius=18f; setCardBackgroundColor(android.graphics.Color.parseColor("#1E293B"))
+        radius=18f; setCardBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "cardAlt"))
         layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,8,0,4)}
         val l=LinearLayout(context).apply{orientation=LinearLayout.VERTICAL;setPadding(18,15,18,15)}
-        l.addView(TextView(context).apply{text=title;textSize=15f;setTextColor(android.graphics.Color.WHITE)})
+        l.addView(TextView(context).apply{text=title;textSize=15f;setTextColor(android.graphics.Color.WHITE);typeface=android.graphics.Typeface.DEFAULT_BOLD})
         l.addView(TextView(context).apply{text=body;textSize=13f;setTextColor(android.graphics.Color.LTGRAY);setPadding(0,7,0,0)})
         addView(l)
     }
