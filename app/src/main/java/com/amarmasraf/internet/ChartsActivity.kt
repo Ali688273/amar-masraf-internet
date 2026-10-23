@@ -29,8 +29,8 @@ class ChartsActivity:AppCompatActivity(){
  private fun showPermissionScreen(){
   permissionMissing=true
   root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER;setPadding(24,30,24,30);setBackgroundColor(ThemeManager.color(this@ChartsActivity,"background"))}
-  root.addView(TextView(this).apply{text="برای محاسبه نمودارها، دسترسی «آمار مصرف» را در تنظیمات اندروید فعال کنید.";textSize=16f;gravity=Gravity.CENTER;setTextColor(ThemeManager.color(this@ChartsActivity,"text"))})
-  root.addView(Button(this).apply{text="باز کردن تنظیمات دسترسی";setOnClickListener{startActivity(Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))}})
+  root.addView(TextView(this).apply{text=LanguageCalendar.text(this, "برای محاسبه نمودارها، دسترسی «آمار مصرف» را در تنظیمات اندروید فعال کنید.", "Enable Usage Access in Android settings to calculate charts.");textSize=16f;gravity=Gravity.CENTER;setTextColor(ThemeManager.color(this@ChartsActivity,"text"))})
+  root.addView(Button(this).apply{text=LanguageCalendar.text(this, "باز کردن تنظیمات دسترسی", "Open access settings");setOnClickListener{startActivity(Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))}})
   setContentView(root)
  }
  private data class Snapshot(
@@ -44,16 +44,16 @@ class ChartsActivity:AppCompatActivity(){
  private var loadJob:kotlinx.coroutines.Job?=null
  private fun build(){
   root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,25,18,30);setBackgroundColor(ThemeManager.color(this@ChartsActivity, "background"))}
-  root.addView(TextView(this).apply{text="📊 نمودار و تاریخچه مصرف";textSize=22f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(0,0,0,15)})
+  root.addView(TextView(this).apply{text=LanguageCalendar.text(this, "📊 نمودار و تاریخچه مصرف", "📊 Usage charts and history");textSize=22f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(0,0,0,15)})
   val actions=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-  actions.addView(Button(this).apply{text="⚙ امکانات";setOnClickListener{startActivity(Intent(this@ChartsActivity,AdvancedUsageActivity::class.java))}})
+  actions.addView(Button(this).apply{text=LanguageCalendar.text(this, "⚙ امکانات", "⚙ Settings");setOnClickListener{startActivity(Intent(this@ChartsActivity,AdvancedUsageActivity::class.java))}})
   actions.addView(Button(this).apply{text="📄 CSV";setOnClickListener{startActivity(Intent(this@ChartsActivity,CsvExportActivity::class.java))}})
   root.addView(actions)
   val tabs=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-  listOf("روزانه","ماهانه","سالانه").forEachIndexed{i,t->tabs.addView(tab(t,i==mode){mode=i;build()})}
+  listOf(LanguageCalendar.text(this, "روزانه", "Daily"),LanguageCalendar.text(this, "ماهانه", "Monthly"),LanguageCalendar.text(this, "سالانه", "Yearly")).forEachIndexed{i,t->tabs.addView(tab(t,i==mode){mode=i;build()})}
   root.addView(tabs)
   root.addView(TextView(this).apply{text=when(mode){0->"۹۰ روز اخیر";1->"۲۴ ماه اخیر";else->"۱۰ سال اخیر"};textSize=15f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(0,20,0,10)})
-  val loading=TextView(this).apply{text="در حال محاسبه آمار…";textSize=14f;gravity=Gravity.CENTER;setTextColor(ThemeManager.color(this@ChartsActivity,"muted"));setPadding(0,35,0,35)}
+  val loading=TextView(this).apply{text=LanguageCalendar.text(this, "در حال محاسبه آمار…", "Calculating usage…");textSize=14f;gravity=Gravity.CENTER;setTextColor(ThemeManager.color(this@ChartsActivity,"muted"));setPadding(0,35,0,35)}
   root.addView(loading)
   val targetRoot=root
   val selectedMode=mode
@@ -95,7 +95,7 @@ class ChartsActivity:AppCompatActivity(){
  private fun createHourly(values:List<Long>):CardView{
   val card=CardView(this).apply{radius=20f;setCardBackgroundColor(ThemeManager.color(this@ChartsActivity, "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,8,0,18)}}
   val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,18,18,18)}
-  box.addView(TextView(this).apply{text="⏱ مصرف ساعتی امروز";textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"))})
+  box.addView(TextView(this).apply{text=LanguageCalendar.text(this, "⏱ مصرف ساعتی امروز", "⏱ Today's hourly usage");textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"))})
   val maxValue=values.maxOrNull()?.coerceAtLeast(1L)?:1L
   values.forEachIndexed{h,v->
    val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL}
