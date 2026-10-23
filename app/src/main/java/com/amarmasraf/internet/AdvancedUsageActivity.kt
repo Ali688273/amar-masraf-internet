@@ -54,18 +54,24 @@ class AdvancedUsageActivity : AppCompatActivity() {
             setOnClickListener { showCalendarPicker() }
         })
 
-        val monthlyLimit=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "حجم بسته در چرخه قبض (گیگابایت)", "Allowance per billing cycle (GB)"); setText(prefs.getFloat("monthly_limit_gb",10f).toString()); inputType=8194; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        root.addView(settingInfo("حجم بسته اینترنت در هر چرخه قبض (گیگابایت)\nمثال: 10 یعنی بسته ۱۰ گیگابایتی.", "Data allowance per billing cycle (GB)\nExample: 10 means a 10 GB plan."))
+        val monthlyLimit=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "حجم بسته به گیگابایت", "Data allowance in GB"); setText(prefs.getFloat("monthly_limit_gb",10f).toString()); inputType=8194; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(monthlyLimit)
-        val warning=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "درصد هشدار سقف بسته (۱ تا ۱۰۰)", "Data limit alert (1–100%)"); setText(prefs.getInt("warning_percent",80).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        root.addView(settingInfo("درصد هشدار بسته (۱ تا ۱۰۰)\nمثال: 80 یعنی هشدار هنگام رسیدن مصرف به ۸۰٪ حجم بسته؛ فقط وقتی هشدارها را روشن کنید.", "Data-limit alert percentage (1–100)\nExample: 80 means alert at 80% of the plan; alerts must be enabled."))
+        val warning=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "درصد هشدار، ۱ تا ۱۰۰", "Alert percentage, 1–100"); setText(prefs.getInt("warning_percent",80).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(warning)
+        root.addView(settingInfo("هشدارها به‌صورت پیش‌فرض خاموش‌اند. برای دریافت هشدار رسیدن به درصد بالا، این گزینه را روشن کنید.", "Alerts are off by default. Turn this on to receive data-limit notifications."))
         val notifications=Switch(this).apply { text=LanguageCalendar.text(this, "فعال بودن هشدارهای مصرف", "Enable usage alerts"); setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); isChecked=prefs.getBoolean("notifications_configured", false) && prefs.getBoolean("notifications", false) }
         root.addView(notifications)
 
-        val daily=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "بودجه روزانه (مگابایت)", "Daily budget (MB)"); setText(prefs.getInt("daily_budget_mb",500).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        root.addView(settingInfo("بودجه مصرف روزانه (مگابایت)\nمثال: 500 یعنی هدف روزانه ۵۰۰ مگابایت؛ برای نمایش مقایسه مصرف امروز استفاده می‌شود.", "Daily usage budget (MB)\nExample: 500 MB is your daily target, used to compare today's usage."))
+        val daily=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "بودجه روزانه به مگابایت", "Daily budget in MB"); setText(prefs.getInt("daily_budget_mb",500).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(daily)
-        val billing=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "روز شروع چرخه قبض، ۱ تا ۲۸", "Billing cycle start day, 1–28"); setText(prefs.getInt("billing_start_day",1).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        root.addView(settingInfo("روز شروع چرخه قبض (۱ تا ۲۸)\nاگر بسته‌تان هر ماه روز اول تمدید می‌شود، مقدار 1 درست است.", "Billing-cycle start day (1–28)\nUse 1 if your data plan renews on the first day of each month."))
+        val billing=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "روز شروع، ۱ تا ۲۸", "Start day, 1–28"); setText(prefs.getInt("billing_start_day",1).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(billing)
-        val anomaly=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "ضریب هشدار مصرف غیرعادی", "Unusual usage multiplier"); setText(prefs.getFloat("anomaly_multiplier",2f).toString()); inputType=8194; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
+        root.addView(settingInfo("ضریب تشخیص مصرف غیرعادی\nمقدار 2.0 یعنی اگر مصرف امروز از دو برابر میانگین ۷ روز گذشته بیشتر شود، هشدار غیرعادی نمایش داده می‌شود.", "Unusual-usage multiplier\n2.0 means today's usage is flagged if it exceeds twice the average of the previous 7 days."))
+        val anomaly=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "ضریب؛ حداقل 1.2", "Multiplier; minimum 1.2"); setText(prefs.getFloat("anomaly_multiplier",2f).toString()); inputType=8194; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(anomaly)
 
         root.addView(Button(this).apply {
@@ -229,6 +235,13 @@ class AdvancedUsageActivity : AppCompatActivity() {
         addView(l)
     }
 
+    private fun settingInfo(textFa: String, textEn: String): TextView = TextView(this).apply {
+        text = LanguageCalendar.text(this@AdvancedUsageActivity, textFa, textEn)
+        textSize = 13f
+        setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted"))
+        setPadding(2, 12, 2, 3)
+    }
+
     private fun todayBudget():String{
         val budget=prefs.getInt("daily_budget_mb",500).toLong()*1024*1024
         val used=UsageFeatureUtils.totalMobileWifi(this,UsageFeatureUtils.today())
@@ -270,6 +283,10 @@ class AdvancedUsageActivity : AppCompatActivity() {
             }
         }catch(_:Exception){}
         return if(found)"ترافیک رابط‌های Hotspot/Tethering از زمان روشن شدن دستگاه: دریافت "+UsageFeatureUtils.formatBytes(rx)+"، ارسال "+UsageFeatureUtils.formatBytes(tx)
-        else "API عمومی اندروید آمار مستقل Hotspot را برای این دستگاه ارائه نکرد؛ عدد ساختگی نمایش داده نمی‌شود."
+        else LanguageCalendar.text(
+            this,
+            "اندروید در این دستگاه آمار جداگانه و قابل‌اعتمادِ مصرف اینترنتِ دستگاه‌های متصل به هات‌اسپات را از طریق API عمومی در اختیار برنامه نمی‌گذارد. بنابراین این بخش نمی‌تواند حجم مصرف مهمان‌ها را دقیق گزارش کند و عدد تخمینی یا ساختگی نشان نمی‌دهد. این پیام به معنی خرابی هات‌اسپات نیست.",
+            "Android does not expose reliable, separate hotspot-client data usage through the public API on this device. This section therefore cannot accurately report guests' data usage and will not show an estimated or fabricated number. This does not mean the hotspot is broken."
+        )
     }
 }
