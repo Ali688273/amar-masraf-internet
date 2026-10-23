@@ -16,8 +16,8 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        def tapsellAppKey = (project.findProperty("TAPSELL_APP_KEY") ?: System.getenv("TAPSELL_APP_KEY") ?: "").toString().replace("\\", "\\\\").replace("\"", "\\\"")
-        def adiveryAppKey = (project.findProperty("ADIVERY_APP_KEY") ?: System.getenv("ADIVERY_APP_KEY") ?: "").toString().replace("\\", "\\\\").replace("\"", "\\\"")
+        def tapsellAppKey = (project.findProperty("TAPSELL_APP_KEY") ?: System.getenv("TAPSELL_APP_KEY") ?: "aanbcpksderreqsnknjnookaelpsgibjbrjbcfsicndoqmkimibmncsnfqrrbkccaiqnjb").toString().replace("\\", "\\\\").replace("\"", "\\\"")
+        def adiveryAppKey = (project.findProperty("ADIVERY_APP_KEY") ?: System.getenv("ADIVERY_APP_KEY") ?: "c92f0ab7-8f64-4007-a345-58129edfa87b").toString().replace("\\", "\\\\").replace("\"", "\\\"")
         buildConfigField "String", "TAPSELL_APP_KEY", "\"${tapsellAppKey}\""
         buildConfigField "String", "ADIVERY_APP_KEY", "\"${adiveryAppKey}\""
     }
