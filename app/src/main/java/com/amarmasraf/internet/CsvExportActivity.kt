@@ -14,7 +14,20 @@ class CsvExportActivity:Activity(){
   val c=Calendar.getInstance().apply{timeInMillis=p.start}
   while(c.timeInMillis<p.end){val s=c.timeInMillis;c.add(Calendar.DAY_OF_YEAR,1);val e=minOf(c.timeInMillis,p.end);val m=UsageFeatureUtils.queryTotal(this,ConnectivityManager.TYPE_MOBILE,s,e);val w=UsageFeatureUtils.queryTotal(this,ConnectivityManager.TYPE_WIFI,s,e);sb.append(sdf.format(Date(s))).append(',').append(m).append(',').append(w).append(',').append(m+w).append('\n')}
   pending=sb.toString()
-  startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{type="text/csv";putExtra(Intent.EXTRA_TITLE,"internet_usage.csv")},9002)
+  startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="text/csv";putExtra(Intent.EXTRA_TITLE,"internet_usage.csv")},9002)
  }
- override fun onActivityResult(r:Int,c:Int,d:Intent?){super.onActivityResult(r,c,d);if(r==9002&&c==RESULT_OK&&d?.data!=null){contentResolver.openOutputStream(d.data!!)?.use{it.write(pending.toByteArray(Charsets.UTF_8))};android.widget.Toast.makeText(this,"CSV ذخیره شد",android.widget.Toast.LENGTH_SHORT).show()};finish()}
+ override fun onActivityResult(r:Int,c:Int,d:Intent?){
+  super.onActivityResult(r,c,d)
+  if(r==9002&&c==RESULT_OK&&d?.data!=null){
+   try{
+    val stream=contentResolver.openOutputStream(d.data!!)
+    if(stream==null) throw java.io.IOException("Unable to open destination")
+    stream.use{it.write(pending.toByteArray(Charsets.UTF_8))}
+    android.widget.Toast.makeText(this,"CSV ذخیره شد",android.widget.Toast.LENGTH_SHORT).show()
+   }catch(e:Exception){
+    android.widget.Toast.makeText(this,"ذخیره CSV ناموفق بود: "+(e.localizedMessage?: "خطای فایل"),android.widget.Toast.LENGTH_LONG).show()
+   }
+  }
+  finish()
+ }
 }
