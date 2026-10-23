@@ -1,6 +1,7 @@
 package com.amarmasraf.internet
 
 import android.content.Context
+import android.view.View
 import java.util.Calendar
 import java.util.Locale
 
@@ -24,6 +25,9 @@ object LanguageCalendar {
 
     fun text(context: Context, persian: String, english: String): String =
         if (isEnglish(context)) english else persian
+
+    fun text(view: View, persian: String, english: String): String =
+        text(view.context, persian, english)
 
     fun date(context: Context, millis: Long, separator: String = "/"): String {
         val c = Calendar.getInstance().apply { timeInMillis = millis }
