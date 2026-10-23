@@ -400,6 +400,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (::downloadSpeedTv.isInitialized && ::uploadSpeedTv.isInitialized && speedRunnable == null) {
+            startSpeedChecker()
+        }
+    }
+
+    override fun onStop() {
+        speedRunnable?.let { speedHandler.removeCallbacks(it) }
+        speedRunnable = null
+        super.onStop()
+    }
+
     override fun onDestroy() {
         speedRunnable?.let { speedHandler.removeCallbacks(it) }
         speedRunnable = null
