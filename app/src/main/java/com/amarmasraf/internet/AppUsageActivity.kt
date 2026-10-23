@@ -27,7 +27,7 @@ class AppUsageActivity:AppCompatActivity(){
   listOf("چرخه قبض","امروز","این هفته","این ماه").forEachIndexed{i,t->periods.addView(Button(this).apply{text=t;textSize=10f;setTextColor(if(periodMode==i)android.graphics.Color.WHITE else ThemeManager.color(this@AppUsageActivity,"text"));setBackgroundColor(ThemeManager.color(this@AppUsageActivity,if(periodMode==i)"primary" else "cardAlt"));setOnClickListener{periodMode=i;build()}})}
   root.addView(periods)
   val sorts=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-  listOf("بیشترین مصرف","نام","کمترین مصرف").forEachIndexed{i,t->sorts.addView(Button(this).apply{text=t;setOnClickListener{sort=i;render()}})}
+  listOf("بیشترین مصرف","نام","کمترین مصرف").forEachIndexed{i,t->sorts.addView(Button(this).apply{text=t;textSize=10f;setTextColor(if(sort==i)android.graphics.Color.WHITE else ThemeManager.color(this@AppUsageActivity,"text"));setBackgroundColor(ThemeManager.color(this@AppUsageActivity,if(sort==i)"primary" else "cardAlt"));setOnClickListener{sort=i;build()}})}
   root.addView(sorts);list=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL};root.addView(list)
   search.addTextChangedListener(object:TextWatcher{override fun beforeTextChanged(s:CharSequence?,st:Int,c:Int,a:Int){};override fun onTextChanged(s:CharSequence?,st:Int,b:Int,c:Int){searchQuery=s?.toString().orEmpty();render()};override fun afterTextChanged(e:Editable?) {}})
   all=load();render();setContentView(ScrollView(this).apply{addView(root)})
@@ -57,6 +57,10 @@ class AppUsageActivity:AppCompatActivity(){
   val q=search.text.toString().trim()
   val items=all.filter{q.isEmpty()||it.name.contains(q,true)||it.pkg.contains(q,true)}.let{when(sort){1->it.sortedBy{it.name.lowercase()};2->it.sortedBy{it.bytes};else->it.sortedByDescending{it.bytes}}}
   list.removeAllViews()
+  if(items.isEmpty()){
+   list.addView(TextView(this).apply{text=if(q.isEmpty())"برای این بازه داده‌ای برای برنامه‌ها ثبت نشده است." else "نتیجه‌ای برای «$q» پیدا نشد.";textSize=14f;gravity=android.view.Gravity.CENTER;setTextColor(ThemeManager.color(this@AppUsageActivity,"muted"));setPadding(20,35,20,35)})
+   return
+  }
   items.forEachIndexed{index,item->list.addView(CardView(this).apply{radius=16f;setCardBackgroundColor(ThemeManager.color(this@AppUsageActivity, if(index%2==0) "card" else "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,5,0,5)};addView(TextView(context).apply{text=item.name+"\n"+item.pkg+"\nمجموع: "+UsageFeatureUtils.formatBytes(item.bytes)+"\n↓ دانلود: "+UsageFeatureUtils.formatBytes(item.rx)+"   ↑ آپلود: "+UsageFeatureUtils.formatBytes(item.tx);textSize=13f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(18,15,18,15)})})}
  }
 }
