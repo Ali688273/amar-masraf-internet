@@ -27,11 +27,18 @@ class AdvancedUsageActivity : AppCompatActivity() {
             text="⚙️ امکانات پیشرفته مصرف"; textSize=22f; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setPadding(0,0,0,15)
         })
 
-        val daily=EditText(this).apply { hint="بودجه روزانه (مگابایت)"; setText(prefs.getInt("daily_budget_mb",500).toString()); inputType=2 }
+        root.addView(Button(this).apply {
+            text = "🎨 انتخاب تم و رنگ کارت‌ها"
+            setTextColor(android.graphics.Color.WHITE)
+            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "accent"))
+            setOnClickListener { showThemePicker() }
+        })
+
+        val daily=EditText(this).apply { hint="بودجه روزانه (مگابایت)"; setText(prefs.getInt("daily_budget_mb",500).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(daily)
-        val billing=EditText(this).apply { hint="روز شروع چرخه قبض، ۱ تا ۲۸"; setText(prefs.getInt("billing_start_day",1).toString()); inputType=2 }
+        val billing=EditText(this).apply { hint="روز شروع چرخه قبض، ۱ تا ۲۸"; setText(prefs.getInt("billing_start_day",1).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(billing)
-        val anomaly=EditText(this).apply { hint="ضریب هشدار مصرف غیرعادی"; setText(prefs.getFloat("anomaly_multiplier",2f).toString()); inputType=8194 }
+        val anomaly=EditText(this).apply { hint="ضریب هشدار مصرف غیرعادی"; setText(prefs.getFloat("anomaly_multiplier",2f).toString()); inputType=8194; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(anomaly)
 
         root.addView(Button(this).apply {
@@ -78,6 +85,21 @@ class AdvancedUsageActivity : AppCompatActivity() {
             }
         })
         setContentView(ScrollView(this).apply { addView(root) })
+    }
+
+    private fun showThemePicker() {
+        val ids = ThemeManager.ids()
+        val labels = ids.map { "●  " + ThemeManager.name(it) }.toTypedArray()
+        val selected = ids.indexOf(ThemeManager.current(this)).coerceAtLeast(0)
+        android.app.AlertDialog.Builder(this)
+            .setTitle("انتخاب تم رنگی")
+            .setSingleChoiceItems(labels, selected) { dialog, which ->
+                prefs.edit().putString("theme", ids[which]).apply()
+                dialog.dismiss()
+                recreate()
+            }
+            .setNegativeButton("انصراف", null)
+            .show()
     }
 
     private fun card(title:String,body:String)=CardView(this).apply{
