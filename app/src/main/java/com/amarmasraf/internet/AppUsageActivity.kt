@@ -67,7 +67,7 @@ class AppUsageActivity:AppCompatActivity(){
   val items=all.filter{q.isEmpty()||it.name.contains(q,true)||it.pkg.contains(q,true)}.let{when(sort){1->it.sortedBy{it.name.lowercase()};2->it.sortedBy{it.bytes};else->it.sortedByDescending{it.bytes}}}
   list.removeAllViews()
   if(items.isEmpty()){
-   list.addView(TextView(this).apply{text=if(q.isEmpty())"برای این بازه داده‌ای برای برنامه‌ها ثبت نشده است." else "نتیجه‌ای برای «$q» پیدا نشد.";textSize=14f;gravity=android.view.Gravity.CENTER;setTextColor(ThemeManager.color(this@AppUsageActivity,"muted"));setPadding(20,35,20,35)})
+   list.addView(TextView(this).apply{text=if(q.isEmpty()) LanguageCalendar.text(this@AppUsageActivity,"برای این بازه داده‌ای برای برنامه‌ها ثبت نشده است.","No app usage data was recorded for this period.") else LanguageCalendar.text(this@AppUsageActivity,"نتیجه‌ای برای «$q» پیدا نشد.","No results found for “$q”.");textSize=14f;gravity=android.view.Gravity.CENTER;setTextColor(ThemeManager.color(this@AppUsageActivity,"muted"));setPadding(20,35,20,35)})
    return
   }
   items.forEachIndexed{index,item->list.addView(CardView(this).apply{radius=16f;setCardBackgroundColor(ThemeManager.color(this@AppUsageActivity, if(index%2==0) "card" else "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,5,0,5)};addView(TextView(context).apply{text=item.name+"\n"+item.pkg+"\nمجموع: "+UsageFeatureUtils.formatBytes(item.bytes)+"\n↓ دانلود: "+UsageFeatureUtils.formatBytes(item.rx)+"   ↑ آپلود: "+UsageFeatureUtils.formatBytes(item.tx);textSize=13f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(18,15,18,15)})})}
