@@ -69,6 +69,13 @@ class MainActivity : AppCompatActivity() {
     private val warningPercent get() = prefs.getInt("warning_percent", 80)
     private val monthlyLimitGb get() = prefs.getFloat("monthly_limit_gb", 10f)
 
+    override fun onResume() {
+        super.onResume()
+        if (!::contentLayout.isInitialized && checkUsageStatsPermission()) {
+            recreate()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -893,7 +900,7 @@ class MainActivity : AppCompatActivity() {
             while (stats.hasNextBucket()) {
                 stats.getNextBucket(bucket)
                 val bytes = bucket.rxBytes + bucket.txBytes
-                if (bytes < 5120) continue
+                if (bytes <= 0L) continue
                 val packages = pm.getPackagesForUid(bucket.uid)
                 if (!packages.isNullOrEmpty()) {
                     val pkg = packages[0]
