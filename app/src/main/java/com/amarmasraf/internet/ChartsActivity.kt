@@ -23,7 +23,16 @@ import java.util.*
 class ChartsActivity:AppCompatActivity(){
  private var mode=0
  private lateinit var root:LinearLayout
- override fun onCreate(b:Bundle?){super.onCreate(b);build()}
+ private var permissionMissing=false
+ override fun onCreate(b:Bundle?){super.onCreate(b);if(UsageFeatureUtils.hasUsageAccess(this))build()else showPermissionScreen()}
+ override fun onResume(){super.onResume();if(permissionMissing&&UsageFeatureUtils.hasUsageAccess(this)){permissionMissing=false;build()}}
+ private fun showPermissionScreen(){
+  permissionMissing=true
+  root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER;setPadding(24,30,24,30);setBackgroundColor(ThemeManager.color(this@ChartsActivity,"background"))}
+  root.addView(TextView(this).apply{text="برای محاسبه نمودارها، دسترسی «آمار مصرف» را در تنظیمات اندروید فعال کنید.";textSize=16f;gravity=Gravity.CENTER;setTextColor(ThemeManager.color(this@ChartsActivity,"text"))})
+  root.addView(Button(this).apply{text="باز کردن تنظیمات دسترسی";setOnClickListener{startActivity(Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))}})
+  setContentView(root)
+ }
  private data class Snapshot(
   val hourly:List<Long>,
   val mobile:List<Long>,
