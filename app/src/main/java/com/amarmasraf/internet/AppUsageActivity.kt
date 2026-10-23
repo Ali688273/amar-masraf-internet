@@ -11,14 +11,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 
 class AppUsageActivity:AppCompatActivity(){
- data class Item(val name:String,val pkg:String,val bytes:Long)
+ data class Item(val name:String,val pkg:String,val bytes:Long,val rx:Long,val tx:Long)
  private lateinit var list:LinearLayout; private lateinit var search:EditText
- private var sort=0; private var networkMode=2; private var periodMode=0; private var all=emptyList<Item>()
+ private var sort=0; private var networkMode=2; private var periodMode=0; private var searchQuery=""; private var all=emptyList<Item>()
  override fun onCreate(b:Bundle?){super.onCreate(b);build()}
  private fun build(){
   val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,22,18,30);setBackgroundColor(ThemeManager.color(this@AppUsageActivity, "background"))}
   root.addView(TextView(this).apply{text="📱 مصرف برنامه‌ها";textSize=22f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(0,0,0,15)})
-  search=EditText(this).apply{hint="جستجوی نام یا package";setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setHintTextColor(ThemeManager.color(this@AppUsageActivity, "muted"))}
+  search=EditText(this).apply{hint="جستجوی نام یا package";setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setHintTextColor(ThemeManager.color(this@AppUsageActivity, "muted"));setText(searchQuery)}
   root.addView(search)
   val networks=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
   listOf("سیم‌کارت","وای‌فای","همه شبکه‌ها").forEachIndexed{i,t->networks.addView(Button(this).apply{text=t;setTextColor(if(networkMode==i)android.graphics.Color.WHITE else ThemeManager.color(this@AppUsageActivity,"text"));setBackgroundColor(ThemeManager.color(this@AppUsageActivity,if(networkMode==i)"primary" else "cardAlt"));setOnClickListener{networkMode=i;build()}})}
@@ -29,19 +29,19 @@ class AppUsageActivity:AppCompatActivity(){
   val sorts=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
   listOf("بیشترین مصرف","نام","کمترین مصرف").forEachIndexed{i,t->sorts.addView(Button(this).apply{text=t;setOnClickListener{sort=i;render()}})}
   root.addView(sorts);list=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL};root.addView(list)
-  search.addTextChangedListener(object:TextWatcher{override fun beforeTextChanged(s:CharSequence?,st:Int,c:Int,a:Int){};override fun onTextChanged(s:CharSequence?,st:Int,b:Int,c:Int){render()};override fun afterTextChanged(e:Editable?) {}})
+  search.addTextChangedListener(object:TextWatcher{override fun beforeTextChanged(s:CharSequence?,st:Int,c:Int,a:Int){};override fun onTextChanged(s:CharSequence?,st:Int,b:Int,c:Int){searchQuery=s?.toString().orEmpty();render()};override fun afterTextChanged(e:Editable?) {}})
   all=load();render();setContentView(ScrollView(this).apply{addView(root)})
  }
  private fun load():List<Item>{
   val m=getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
-  val map=HashMap<String,Long>()
+  val map=HashMap<String,Long>();val rxMap=HashMap<String,Long>();val txMap=HashMap<String,Long>()
   val types=when(networkMode){0->intArrayOf(ConnectivityManager.TYPE_MOBILE);1->intArrayOf(ConnectivityManager.TYPE_WIFI);else->intArrayOf(ConnectivityManager.TYPE_MOBILE,ConnectivityManager.TYPE_WIFI)}
   val p=selectedPeriod()
   for(type in types)try{
    val s=m.querySummary(type,null,p.start,p.end);val b=NetworkStats.Bucket()
-   while(s.hasNextBucket()){s.getNextBucket(b);val pkgs=packageManager.getPackagesForUid(b.uid);if(!pkgs.isNullOrEmpty())map[pkgs[0]]=(map[pkgs[0]]?:0L)+b.rxBytes+b.txBytes};s.close()
+   while(s.hasNextBucket()){s.getNextBucket(b);val pkgs=packageManager.getPackagesForUid(b.uid);if(!pkgs.isNullOrEmpty()){val pkg=pkgs[0];map[pkg]=(map[pkg]?:0L)+b.rxBytes+b.txBytes;rxMap[pkg]=(rxMap[pkg]?:0L)+b.rxBytes;txMap[pkg]=(txMap[pkg]?:0L)+b.txBytes}};s.close()
   }catch(_:Exception){}
-  return map.mapNotNull{(pkg,bytes)->try{val a=packageManager.getApplicationInfo(pkg,0);Item(packageManager.getApplicationLabel(a).toString(),pkg,bytes)}catch(_:Exception){null}}
+  return map.mapNotNull{(pkg,bytes)->try{val a=packageManager.getApplicationInfo(pkg,0);Item(packageManager.getApplicationLabel(a).toString(),pkg,bytes,rxMap[pkg]?:0L,txMap[pkg]?:0L)}catch(_:Exception){null}}
  }
  private fun selectedPeriod():UsageFeatureUtils.Period{
   val now=System.currentTimeMillis()
@@ -57,6 +57,6 @@ class AppUsageActivity:AppCompatActivity(){
   val q=search.text.toString().trim()
   val items=all.filter{q.isEmpty()||it.name.contains(q,true)||it.pkg.contains(q,true)}.let{when(sort){1->it.sortedBy{it.name.lowercase()};2->it.sortedBy{it.bytes};else->it.sortedByDescending{it.bytes}}}
   list.removeAllViews()
-  items.forEachIndexed{index,item->list.addView(CardView(this).apply{radius=16f;setCardBackgroundColor(ThemeManager.color(this@AppUsageActivity, if(index%2==0) "card" else "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,5,0,5)};addView(TextView(context).apply{text=item.name+"\n"+item.pkg+"\n"+UsageFeatureUtils.formatBytes(item.bytes);textSize=13f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(18,15,18,15)})})}
+  items.forEachIndexed{index,item->list.addView(CardView(this).apply{radius=16f;setCardBackgroundColor(ThemeManager.color(this@AppUsageActivity, if(index%2==0) "card" else "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,5,0,5)};addView(TextView(context).apply{text=item.name+"\n"+item.pkg+"\nمجموع: "+UsageFeatureUtils.formatBytes(item.bytes)+"\n↓ دانلود: "+UsageFeatureUtils.formatBytes(item.rx)+"   ↑ آپلود: "+UsageFeatureUtils.formatBytes(item.tx);textSize=13f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(18,15,18,15)})})}
  }
 }
