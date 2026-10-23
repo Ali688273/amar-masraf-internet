@@ -883,40 +883,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun queryAppUsageList(statsManager: NetworkStatsManager, netType: Int, start: Long, end: Long): List<AppInfo> {
-        val map = HashMap<String, Long>()
+        val totals = HashMap<String, Long>()
+        val downloads = HashMap<String, Long>()
+        val uploads = HashMap<String, Long>()
         val pm = packageManager
         try {
             val stats = statsManager.querySummary(netType, null, start, end)
             val bucket = NetworkStats.Bucket()
             while (stats.hasNextBucket()) {
                 stats.getNextBucket(bucket)
-                val uid = bucket.uid
                 val bytes = bucket.rxBytes + bucket.txBytes
-                if (bytes < 5120) continue // Skip very low traffic
-
-                val pkgs = pm.getPackagesForUid(uid)
-                if (pkgs != null && pkgs.isNotEmpty()) {
-                    val pkg = pkgs[0]
-                    map[pkg] = (map[pkg] ?: 0L) + bytes
+                if (bytes < 5120) continue
+                val packages = pm.getPackagesForUid(bucket.uid)
+                if (!packages.isNullOrEmpty()) {
+                    val pkg = packages[0]
+                    totals[pkg] = (totals[pkg] ?: 0L) + bytes
+                    downloads[pkg] = (downloads[pkg] ?: 0L) + bucket.rxBytes
+                    uploads[pkg] = (uploads[pkg] ?: 0L) + bucket.txBytes
                 }
             }
             stats.close()
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("NetworkStats", "App summary query failed", e)
         }
 
         val list = mutableListOf<AppInfo>()
-        for ((pkg, bytes) in map) {
+        for ((pkg, bytes) in totals) {
             try {
                 val appInfo = pm.getApplicationInfo(pkg, 0)
                 val name = pm.getApplicationLabel(appInfo).toString()
                 val icon = pm.getApplicationIcon(appInfo)
-                val appUid = pm.getApplicationInfo(pkg, 0).uid
-                val rx = queryAppDirection(statsManager, netType, start, end, appUid, true)
-                val tx = queryAppDirection(statsManager, netType, start, end, appUid, false)
-                list.add(AppInfo(name, icon, bytes, rx, tx))
-            } catch (e: Exception) {
-                continue
+                list.add(AppInfo(name, icon, bytes, downloads[pkg] ?: 0L, uploads[pkg] ?: 0L))
+            } catch (_: Exception) {
+                // Ignore packages removed while the usage list was being built.
             }
         }
         return list.sortedByDescending { it.bytes }
