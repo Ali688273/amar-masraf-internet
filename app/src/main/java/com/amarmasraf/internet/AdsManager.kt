@@ -55,15 +55,12 @@ object AdsManager {
     private const val APP_OPEN_COOLDOWN_MS = 30 * 60 * 1000L
 
     fun initialize(context: Context) {
-        val app = context.applicationContext
+        val app = context.applicationContext as android.app.Application
         if (!initializing.compareAndSet(false, true)) return
 
         try {
             Adivery.setLoggingEnabled(false)
             Adivery.configure(app, BuildConfig.ADIVERY_APP_KEY)
-            Adivery.prepareInterstitialAd(app, ADIVERY_INTERSTITIAL)
-            Adivery.prepareRewardedAd(app, ADIVERY_REWARDED)
-            Adivery.prepareAppOpenAd(app, ADIVERY_APP_OPEN)
         } catch (e: Exception) {
             Log.w(TAG, "Adivery initialization/preload failed", e)
         }
@@ -98,7 +95,7 @@ object AdsManager {
     }
 
     private fun requestTapsellBanner(activity: Activity, container: FrameLayout) {
-        requestTapsellBannerForZone(activity, container, T_STANDARD_BANNER, tryInstantBanner = true)
+        requestTapsellBannerForZone(activity, container, TAPSELL_STANDARD_BANNER, tryInstantBanner = true)
     }
 
     private fun requestTapsellBannerForZone(
@@ -176,7 +173,7 @@ object AdsManager {
         // Rotate native video in occasionally; keep native banner as the usual, quieter format.
         if (tapsellReady && launchCount % 3 == 0) {
             try {
-                TapsellPlus.requestNativeVideo(activity, T_NATIVE_VIDEO, object : AdRequestCallback() {
+                TapsellPlus.requestNativeVideo(activity, TAPSELL_NATIVE_VIDEO, object : AdRequestCallback() {
                     override fun response(model: TapsellPlusAdModel) {
                         if (activity.isFinishing || activity.isDestroyed) return
                         try {
@@ -215,7 +212,7 @@ object AdsManager {
         if (tapsellReady) {
             try {
                 val holder = TapsellPlus.createAdHolder(activity, container, ir.tapsell.plus.R.layout.native_banner)
-                TapsellPlus.requestNativeAd(activity, T_NATIVE_BANNER, object : AdRequestCallback() {
+                TapsellPlus.requestNativeAd(activity, TAPSELL_NATIVE_BANNER, object : AdRequestCallback() {
                     override fun response(model: TapsellPlusAdModel) {
                         if (activity.isFinishing || activity.isDestroyed) return
                         try {
