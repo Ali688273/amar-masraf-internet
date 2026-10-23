@@ -80,7 +80,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
                     .putInt("daily_budget_mb",daily.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 500)
                     .putInt("billing_start_day",billing.text.toString().toIntOrNull()?.coerceIn(1,28) ?: 1)
                     .putFloat("anomaly_multiplier",anomaly.text.toString().toFloatOrNull()?.coerceAtLeast(1.2f) ?: 2f).apply()
-                Toast.makeText(this@AdvancedUsageActivity,"تنظیمات ذخیره شد",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@AdvancedUsageActivity,LanguageCalendar.text(this@AdvancedUsageActivity,"تنظیمات ذخیره شد","Settings saved"),Toast.LENGTH_SHORT).show()
                 if (notifications.isChecked) scheduleUsageAlerts() else cancelUsageAlerts()
                 build()
             }
@@ -110,7 +110,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
             setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "upload"))
             setOnClickListener {
                 if (!UsageFeatureUtils.hasUsageAccess(this@AdvancedUsageActivity)) {
-                    Toast.makeText(this@AdvancedUsageActivity, "ابتدا دسترسی آمار مصرف را فعال کنید", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@AdvancedUsageActivity, LanguageCalendar.text(this@AdvancedUsageActivity,"ابتدا دسترسی آمار مصرف را فعال کنید","Enable Usage Access first"), Toast.LENGTH_LONG).show()
                     startActivity(Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))
                     return@setOnClickListener
                 }
@@ -118,7 +118,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
                 if(android.os.Build.VERSION.SDK_INT>=33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
                     requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),8001)
                 androidx.core.content.ContextCompat.startForegroundService(this@AdvancedUsageActivity,Intent(this@AdvancedUsageActivity,UsageMonitorService::class.java))
-                Toast.makeText(this@AdvancedUsageActivity,"نمایش مصرف در نوار اعلان فعال شد",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@AdvancedUsageActivity,LanguageCalendar.text(this@AdvancedUsageActivity,"نمایش مصرف در نوار اعلان فعال شد","Usage notification enabled"),Toast.LENGTH_SHORT).show()
             }
         })
         root.addView(Button(this).apply {
@@ -128,7 +128,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
             setOnClickListener {
                 prefs.edit().putBoolean("live_usage_enabled", false).apply()
                 stopService(Intent(this@AdvancedUsageActivity, UsageMonitorService::class.java))
-                Toast.makeText(this@AdvancedUsageActivity,"نمایش مصرف در نوار اعلان خاموش شد",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@AdvancedUsageActivity,LanguageCalendar.text(this@AdvancedUsageActivity,"نمایش مصرف در نوار اعلان خاموش شد","Usage notification disabled"),Toast.LENGTH_SHORT).show()
             }
         })
         setContentView(ScrollView(this).apply { addView(root) })
@@ -186,7 +186,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
         val labels = ids.map { "●  " + ThemeManager.name(it) }.toTypedArray()
         val selected = ids.indexOf(ThemeManager.current(this)).coerceAtLeast(0)
         android.app.AlertDialog.Builder(this)
-            .setTitle("انتخاب تم رنگی")
+            .setTitle(LanguageCalendar.text(this, "انتخاب تم رنگی", "Choose color theme"))
             .setSingleChoiceItems(labels, selected) { dialog, which ->
                 prefs.edit().putString("theme", ids[which]).apply()
                 dialog.dismiss()
@@ -225,12 +225,12 @@ class AdvancedUsageActivity : AppCompatActivity() {
             sum+=UsageFeatureUtils.totalMobileWifi(this,UsageFeatureUtils.Period(c.timeInMillis,e.timeInMillis))
         }
         val avg=sum/7.0; val mult=prefs.getFloat("anomaly_multiplier",2f)
-        return if(avg>0 && today>avg*mult) "هشدار: مصرف امروز بیش از "+mult+" برابر میانگین ۷ روز اخیر است." else "مصرف امروز در محدوده معمول قرار دارد."
+        return if (LanguageCalendar.isEnglish(this)) { if(avg>0 && today>avg*mult) "Warning: today’s usage is over "+mult+" times the 7-day average." else "Today’s usage is within the usual range." } else { if(avg>0 && today>avg*mult) "هشدار: مصرف امروز بیش از "+mult+" برابر میانگین ۷ روز اخیر است." else "مصرف امروز در محدوده معمول قرار دارد." }
     }
     private fun networkStatus():String{
         val cm=getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val n=cm.activeNetwork ?: return "اتصال فعال یافت نشد."
-        val c=cm.getNetworkCapabilities(n) ?: return "وضعیت شبکه نامشخص است."
+        val n=cm.activeNetwork ?: return LanguageCalendar.text(this, "اتصال فعال یافت نشد.", "No active connection found.")
+        val c=cm.getNetworkCapabilities(n) ?: return LanguageCalendar.text(this, "وضعیت شبکه نامشخص است.", "Network status is unknown.")
         val type=when{c.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)->"Wi‑Fi";c.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)->"سیم‌کارت";c.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)->"Ethernet";else->"سایر"}
         return "نوع اتصال: "+type+"\nاینترنت: "+if(c.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET))"در دسترس" else "در دسترس نیست"
     }
