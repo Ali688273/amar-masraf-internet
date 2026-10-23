@@ -25,7 +25,7 @@ class UsageBootReceiver : BroadcastReceiver() {
             }
         }
 
-        if (!prefs.getBoolean("notifications", true)) return
+        if (!prefs.getBoolean("notifications_configured", false) || !prefs.getBoolean("notifications", false)) return
 
         val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val alertIntent = Intent(context, UsageAlertReceiver::class.java)
