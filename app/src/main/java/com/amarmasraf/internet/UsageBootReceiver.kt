@@ -12,16 +12,19 @@ class UsageBootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action != Intent.ACTION_BOOT_COMPLETED) return
 
-        try {
-            ContextCompat.startForegroundService(
-                context,
-                Intent(context, UsageMonitorService::class.java)
-            )
-        } catch (_: Exception) {
-            // Device or OS may restrict foreground service startup after boot.
+        val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+
+        if (prefs.getBoolean("live_usage_enabled", false)) {
+            try {
+                ContextCompat.startForegroundService(
+                    context,
+                    Intent(context, UsageMonitorService::class.java)
+                )
+            } catch (_: Exception) {
+                // Device or OS may restrict foreground service startup after boot.
+            }
         }
 
-        val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
         if (!prefs.getBoolean("notifications", true)) return
 
         val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
