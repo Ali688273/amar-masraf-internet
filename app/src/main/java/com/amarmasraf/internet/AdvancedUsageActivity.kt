@@ -58,7 +58,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
         root.addView(monthlyLimit)
         val warning=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "درصد هشدار سقف بسته (۱ تا ۱۰۰)", "Data limit alert (1–100%)"); setText(prefs.getInt("warning_percent",80).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(warning)
-        val notifications=Switch(this).apply { text=LanguageCalendar.text(this, "فعال بودن هشدارهای مصرف", "Enable usage alerts"); setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); isChecked=prefs.getBoolean("notifications",true) }
+        val notifications=Switch(this).apply { text=LanguageCalendar.text(this, "فعال بودن هشدارهای مصرف", "Enable usage alerts"); setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); isChecked=prefs.getBoolean("notifications_configured", false) && prefs.getBoolean("notifications", false) }
         root.addView(notifications)
 
         val daily=EditText(this).apply { hint=LanguageCalendar.text(this@AdvancedUsageActivity, "بودجه روزانه (مگابایت)", "Daily budget (MB)"); setText(prefs.getInt("daily_budget_mb",500).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
@@ -77,6 +77,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
                     .putFloat("monthly_limit_gb", monthlyLimit.text.toString().toFloatOrNull()?.coerceAtLeast(0.1f) ?: 10f)
                     .putInt("warning_percent", warning.text.toString().toIntOrNull()?.coerceIn(1,100) ?: 80)
                     .putBoolean("notifications", notifications.isChecked)
+                    .putBoolean("notifications_configured", true)
                     .putInt("daily_budget_mb",daily.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 500)
                     .putInt("billing_start_day",billing.text.toString().toIntOrNull()?.coerceIn(1,28) ?: 1)
                     .putFloat("anomaly_multiplier",anomaly.text.toString().toFloatOrNull()?.coerceAtLeast(1.2f) ?: 2f).apply()
