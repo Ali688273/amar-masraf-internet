@@ -38,7 +38,7 @@ object ThemeManager {
         val hex = when (role) {
             "background" -> p.background
             "card" -> p.card
-            "cardAlt" -> p.primary
+            "cardAlt" -> if (current(context) == "light") Color.parseColor("#E0E7FF") else p.primary
             "dark" -> p.dark
             "primary" -> p.primary
             "accent" -> p.accent
