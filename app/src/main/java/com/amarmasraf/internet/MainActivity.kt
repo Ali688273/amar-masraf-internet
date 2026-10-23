@@ -317,7 +317,7 @@ class MainActivity : AppCompatActivity() {
     private fun createPackageOverviewCard(): CardView {
         val period = UsageFeatureUtils.billingPeriod(this)
         val now = System.currentTimeMillis()
-        val used = UsageFeatureUtils.totalMobileWifi(this, UsageFeatureUtils.Period(period.start, now))
+        val used = UsageFeatureUtils.queryTotal(this, ConnectivityManager.TYPE_MOBILE, period.start, now)
         val limitBytes = (monthlyLimitGb.coerceAtLeast(0.1f) * 1024.0 * 1024.0 * 1024.0).toLong()
         val percent = if (limitBytes > 0L) (used.toDouble() * 100.0 / limitBytes).toInt() else 0
         val remaining = (limitBytes - used).coerceAtLeast(0L)
@@ -340,7 +340,7 @@ class MainActivity : AppCompatActivity() {
                 setTextColor(ThemeManager.color(this@MainActivity, "text"))
             })
             box.addView(TextView(context).apply {
-                text = "مصرف چرخه: ${formatBytes(used)} از ${formatBytes(limitBytes)} • ${percent.coerceAtLeast(0)}٪"
+                text = "مصرف سیم‌کارت در چرخه: ${formatBytes(used)} از ${formatBytes(limitBytes)} • ${percent.coerceAtLeast(0)}٪"
                 textSize = 12f
                 setTextColor(ThemeManager.color(this@MainActivity, "text"))
                 setPadding(0, 10, 0, 5)
