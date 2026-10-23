@@ -54,7 +54,7 @@ class ChartsActivity:AppCompatActivity(){
   val tabs=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
   listOf(LanguageCalendar.text(this, "روزانه", "Daily"),LanguageCalendar.text(this, "ماهانه", "Monthly"),LanguageCalendar.text(this, "سالانه", "Yearly")).forEachIndexed{i,t->tabs.addView(tab(t,i==mode){mode=i;build()})}
   root.addView(tabs)
-  root.addView(TextView(this).apply{text=when(mode){0->"۹۰ روز اخیر";1->"۲۴ ماه اخیر";else->"۱۰ سال اخیر"};textSize=15f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(0,20,0,10)})
+  root.addView(TextView(this).apply{text=when(mode){0->LanguageCalendar.text(this@ChartsActivity, "۹۰ روز اخیر", "Last 90 days");1->LanguageCalendar.text(this@ChartsActivity, "۲۴ ماه اخیر", "Last 24 months");else->LanguageCalendar.text(this@ChartsActivity, "۱۰ سال اخیر", "Last 10 years")};textSize=15f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(0,20,0,10)})
   val loading=TextView(this).apply{text=LanguageCalendar.text(this, "در حال محاسبه آمار…", "Calculating usage…");textSize=14f;gravity=Gravity.CENTER;setTextColor(ThemeManager.color(this@ChartsActivity,"muted"));setPadding(0,35,0,35)}
   root.addView(loading)
   val targetRoot=root
@@ -116,7 +116,7 @@ class ChartsActivity:AppCompatActivity(){
   data.indices.forEach{i->
    val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL;setPadding(0,3,0,3)}
    val offset=i-(data.size-1)
-   row.addView(TextView(this).apply{text=when(mode){0->if(offset==0)"امروز" else (-offset).toString()+" روز پیش";1->LanguageCalendar.monthYear(this@ChartsActivity, monthDate(offset).time);else->LanguageCalendar.year(this@ChartsActivity, yearDate(offset).time)};textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));layoutParams=LinearLayout.LayoutParams(62,-2)})
+   row.addView(TextView(this).apply{text=when(mode){0->if(offset==0)LanguageCalendar.text(this@ChartsActivity, "امروز", "Today") else if(LanguageCalendar.isEnglish(this@ChartsActivity)) (-offset).toString()+" days ago" else (-offset).toString()+" روز پیش";1->LanguageCalendar.monthYear(this@ChartsActivity, monthDate(offset).time);else->LanguageCalendar.year(this@ChartsActivity, yearDate(offset).time)};textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));layoutParams=LinearLayout.LayoutParams(62,-2)})
    row.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply{max=1000;progress=((data[i].toDouble()/maxValue)*1000).toInt().coerceIn(0,1000);progressTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, if (title == "سیم‌کارت") "download" else "upload"));progressBackgroundTintList=ColorStateList.valueOf(ThemeManager.color(this@ChartsActivity, "background"));layoutParams=LinearLayout.LayoutParams(0,14,1f).apply{setMargins(4,0,4,0)}})
    row.addView(TextView(this).apply{text=format(data[i]);textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"))})
    box.addView(row)
@@ -128,8 +128,8 @@ class ChartsActivity:AppCompatActivity(){
   val current=snapshot.currentMobile+snapshot.currentWifi
   val prior=snapshot.previousTotal
   val change=if(prior>0)((current-prior).toDouble()/prior*100.0) else 0.0
-  val comparison=if(prior<=0)"برای بازه قبلی داده کافی نیست" else String.format(Locale.US,"تغییر نسبت به بازه قبل: %.0f%% %s",kotlin.math.abs(change),if(change>=0)"بیشتر" else "کمتر")
-  addView(TextView(context).apply{text="مقایسه بازه فعلی با بازه قبل\nسیم‌کارت: "+format(snapshot.currentMobile)+"\nWi‑Fi: "+format(snapshot.currentWifi)+"\nمجموع فعلی: "+format(current)+"\nمجموع بازه قبل: "+format(prior)+"\n"+comparison;textSize=14f;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(18,18,18,18)})
+  val comparison=if(prior<=0)LanguageCalendar.text(this, "برای بازه قبلی داده کافی نیست", "Not enough data for the previous period") else if(LanguageCalendar.isEnglish(this)) String.format(Locale.US,"Change from previous period: %.0f%% %s",kotlin.math.abs(change),if(change>=0)"higher" else "lower") else String.format(Locale.US,"تغییر نسبت به بازه قبل: %.0f%% %s",kotlin.math.abs(change),if(change>=0)"بیشتر" else "کمتر")
+  addView(TextView(context).apply{text=if(LanguageCalendar.isEnglish(this@ChartsActivity)) "Current vs previous period\nMobile: "+format(snapshot.currentMobile)+"\nWi-Fi: "+format(snapshot.currentWifi)+"\nCurrent total: "+format(current)+"\nPrevious total: "+format(prior)+"\n"+comparison else "مقایسه بازه فعلی با بازه قبل\nسیم‌کارت: "+format(snapshot.currentMobile)+"\nWi‑Fi: "+format(snapshot.currentWifi)+"\nمجموع فعلی: "+format(current)+"\nمجموع بازه قبل: "+format(prior)+"\n"+comparison;textSize=14f;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(18,18,18,18)})
  }
  private fun query(m:NetworkStatsManager,t:Int,s:Long,e:Long):Long=try{val x=m.querySummary(t,null,s,e);val b=NetworkStats.Bucket();var z=0L;while(x.hasNextBucket()){x.getNextBucket(b);z+=b.rxBytes+b.txBytes};x.close();z}catch(_:Exception){0L}
  private fun dayRange(o:Int):Pair<Long,Long>{val c=Calendar.getInstance();c.add(Calendar.DAY_OF_YEAR,o);c.set(Calendar.HOUR_OF_DAY,0);c.set(Calendar.MINUTE,0);c.set(Calendar.SECOND,0);c.set(Calendar.MILLISECOND,0);val s=c.timeInMillis;c.add(Calendar.DAY_OF_YEAR,1);return Pair(s,c.timeInMillis)}
