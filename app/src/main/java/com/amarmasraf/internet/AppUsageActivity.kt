@@ -20,23 +20,23 @@ class AppUsageActivity:AppCompatActivity(){
  private fun showPermissionScreen(){
   permissionMissing=true
   val page=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER;setPadding(24,30,24,30);setBackgroundColor(ThemeManager.color(this@AppUsageActivity,"background"))}
-  page.addView(TextView(this).apply{text="برای نمایش مصرف هر برنامه، دسترسی «آمار مصرف» را در تنظیمات اندروید فعال کنید.";textSize=16f;gravity=android.view.Gravity.CENTER;setTextColor(ThemeManager.color(this@AppUsageActivity,"text"))})
-  page.addView(Button(this).apply{text="باز کردن تنظیمات دسترسی";setOnClickListener{startActivity(android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))}})
+  page.addView(TextView(this).apply{text=LanguageCalendar.text(this, "برای نمایش مصرف هر برنامه، دسترسی «آمار مصرف» را در تنظیمات اندروید فعال کنید.", "Enable Usage Access in Android settings to view per-app usage.");textSize=16f;gravity=android.view.Gravity.CENTER;setTextColor(ThemeManager.color(this@AppUsageActivity,"text"))})
+  page.addView(Button(this).apply{text=LanguageCalendar.text(this, "باز کردن تنظیمات دسترسی", "Open access settings");setOnClickListener{startActivity(android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))}})
   setContentView(page)
  }
  private fun build(){
   val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,22,18,30);setBackgroundColor(ThemeManager.color(this@AppUsageActivity, "background"))}
-  root.addView(TextView(this).apply{text="📱 مصرف برنامه‌ها";textSize=22f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(0,0,0,15)})
+  root.addView(TextView(this).apply{text=LanguageCalendar.text(this, "📱 مصرف برنامه‌ها", "📱 App usage");textSize=22f;setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setPadding(0,0,0,15)})
   search=EditText(this).apply{hint="جستجوی نام یا package";setTextColor(ThemeManager.color(this@AppUsageActivity, "text"));setHintTextColor(ThemeManager.color(this@AppUsageActivity, "muted"));setText(searchQuery)}
   root.addView(search)
   val networks=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-  listOf("سیم‌کارت","وای‌فای","همه شبکه‌ها").forEachIndexed{i,t->networks.addView(Button(this).apply{text=t;setTextColor(if(networkMode==i)android.graphics.Color.WHITE else ThemeManager.color(this@AppUsageActivity,"text"));setBackgroundColor(ThemeManager.color(this@AppUsageActivity,if(networkMode==i)"primary" else "cardAlt"));setOnClickListener{networkMode=i;build()}})}
+  listOf(LanguageCalendar.text(this, "سیم‌کارت", "Mobile"),LanguageCalendar.text(this, "وای‌فای", "Wi-Fi"),LanguageCalendar.text(this, "همه شبکه‌ها", "All networks")).forEachIndexed{i,t->networks.addView(Button(this).apply{text=t;setTextColor(if(networkMode==i)android.graphics.Color.WHITE else ThemeManager.color(this@AppUsageActivity,"text"));setBackgroundColor(ThemeManager.color(this@AppUsageActivity,if(networkMode==i)"primary" else "cardAlt"));setOnClickListener{networkMode=i;build()}})}
   root.addView(networks)
   val periods=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-  listOf("چرخه قبض","امروز","این هفته","این ماه").forEachIndexed{i,t->periods.addView(Button(this).apply{text=t;textSize=10f;setTextColor(if(periodMode==i)android.graphics.Color.WHITE else ThemeManager.color(this@AppUsageActivity,"text"));setBackgroundColor(ThemeManager.color(this@AppUsageActivity,if(periodMode==i)"primary" else "cardAlt"));setOnClickListener{periodMode=i;build()}})}
+  listOf(LanguageCalendar.text(this, "چرخه قبض", "Billing cycle"),LanguageCalendar.text(this, "امروز", "Today"),LanguageCalendar.text(this, "این هفته", "This week"),LanguageCalendar.text(this, "این ماه", "This month")).forEachIndexed{i,t->periods.addView(Button(this).apply{text=t;textSize=10f;setTextColor(if(periodMode==i)android.graphics.Color.WHITE else ThemeManager.color(this@AppUsageActivity,"text"));setBackgroundColor(ThemeManager.color(this@AppUsageActivity,if(periodMode==i)"primary" else "cardAlt"));setOnClickListener{periodMode=i;build()}})}
   root.addView(periods)
   val sorts=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-  listOf("بیشترین مصرف","نام","کمترین مصرف").forEachIndexed{i,t->sorts.addView(Button(this).apply{text=t;textSize=10f;setTextColor(if(sort==i)android.graphics.Color.WHITE else ThemeManager.color(this@AppUsageActivity,"text"));setBackgroundColor(ThemeManager.color(this@AppUsageActivity,if(sort==i)"primary" else "cardAlt"));setOnClickListener{sort=i;build()}})}
+  listOf(LanguageCalendar.text(this, "بیشترین مصرف", "Most used"),LanguageCalendar.text(this, "نام", "Name"),LanguageCalendar.text(this, "کمترین مصرف", "Least used")).forEachIndexed{i,t->sorts.addView(Button(this).apply{text=t;textSize=10f;setTextColor(if(sort==i)android.graphics.Color.WHITE else ThemeManager.color(this@AppUsageActivity,"text"));setBackgroundColor(ThemeManager.color(this@AppUsageActivity,if(sort==i)"primary" else "cardAlt"));setOnClickListener{sort=i;build()}})}
   root.addView(sorts);list=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL};root.addView(list)
   search.addTextChangedListener(object:TextWatcher{override fun beforeTextChanged(s:CharSequence?,st:Int,c:Int,a:Int){};override fun onTextChanged(s:CharSequence?,st:Int,b:Int,c:Int){searchQuery=s?.toString().orEmpty();render()};override fun afterTextChanged(e:Editable?) {}})
   all=load();render();setContentView(ScrollView(this).apply{addView(root)})
