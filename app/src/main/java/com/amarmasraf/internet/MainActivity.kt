@@ -152,7 +152,7 @@ class MainActivity : AppCompatActivity() {
 
         if (!checkUsageStatsPermission()) {
             val permissionNotice = TextView(this).apply {
-                text = "لطفاً دسترسی به آمار مصرف (Usage Access) را برای این برنامه فعال کنید."
+                text = LanguageCalendar.text(this@MainActivity, "لطفاً دسترسی به آمار مصرف (Usage Access) را برای این برنامه فعال کنید.", "Please enable Usage Access for this app in Android settings.")
                 textSize = 15f
                 setTextColor(ThemeManager.color(this@MainActivity, "danger"))
                 gravity = Gravity.CENTER
@@ -160,7 +160,7 @@ class MainActivity : AppCompatActivity() {
             }
             mainLayout.addView(permissionNotice)
             mainLayout.addView(Button(this).apply {
-                text = "باز کردن تنظیمات دسترسی مصرف"
+                text = LanguageCalendar.text(this@MainActivity, "باز کردن تنظیمات دسترسی مصرف", "Open usage access settings")
                 setTextColor(Color.WHITE)
                 setBackgroundColor(ThemeManager.color(this@MainActivity, "primary"))
                 setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
@@ -327,7 +327,7 @@ class MainActivity : AppCompatActivity() {
 
         // App List Title
         val listTitle = TextView(this).apply {
-            text = "مصرف اینترنت برنامه‌ها (دانلود / آپلود)"
+            text = LanguageCalendar.text(this@MainActivity, "مصرف اینترنت برنامه‌ها (دانلود / آپلود)", "App internet usage (download / upload)")
             textSize = 16f
             setTextColor(ThemeManager.color(this@MainActivity, "text"))
             typeface = Typeface.DEFAULT_BOLD
@@ -339,7 +339,7 @@ class MainActivity : AppCompatActivity() {
         val appList = queryAppUsageList(statsManager, netType, start, end)
         if (appList.isEmpty()) {
             val emptyTv = TextView(this).apply {
-                text = "داده‌ای برای این بازه زمانی یافت نشد."
+                text = LanguageCalendar.text(this@MainActivity, "داده‌ای برای این بازه زمانی یافت نشد.", "No data found for this time range.")
                 setTextColor(ThemeManager.color(this@MainActivity, "muted"))
                 gravity = Gravity.CENTER
                 setPadding(0, 40, 0, 40)
@@ -373,13 +373,13 @@ class MainActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
             val box = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
             box.addView(TextView(context).apply {
-                text = "📦 وضعیت بسته و پیش‌بینی مصرف"
+                text = LanguageCalendar.text(this@MainActivity, "📦 وضعیت بسته و پیش‌بینی مصرف", "📦 Data plan status and usage forecast")
                 textSize = 16f
                 typeface = Typeface.DEFAULT_BOLD
                 setTextColor(ThemeManager.color(this@MainActivity, "text"))
             })
             box.addView(TextView(context).apply {
-                text = "مصرف سیم‌کارت در چرخه: ${formatBytes(used)} از ${formatBytes(limitBytes)} • ${percent.coerceAtLeast(0)}٪"
+                text = LanguageCalendar.text(this@MainActivity, "مصرف سیم‌کارت در چرخه: ${formatBytes(used)} از ${formatBytes(limitBytes)} • ${percent.coerceAtLeast(0)}٪", "Mobile usage this cycle: ${formatBytes(used)} of ${formatBytes(limitBytes)} • ${percent.coerceAtLeast(0)}%")
                 textSize = 12f
                 setTextColor(ThemeManager.color(this@MainActivity, "text"))
                 setPadding(0, 10, 0, 5)
@@ -392,7 +392,7 @@ class MainActivity : AppCompatActivity() {
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 12).apply { setMargins(0, 0, 0, 8) }
             })
             box.addView(TextView(context).apply {
-                text = "باقی‌مانده بسته: ${formatBytes(remaining)}"
+                text = LanguageCalendar.text(this@MainActivity, "باقی‌مانده بسته: ${formatBytes(remaining)}", "Remaining data: ${formatBytes(remaining)}")
                 textSize = 12f
                 setTextColor(ThemeManager.color(this@MainActivity, "muted"))
             })
@@ -405,7 +405,7 @@ class MainActivity : AppCompatActivity() {
                 setPadding(0, 6, 0, 10)
             })
             box.addView(TextView(context).apply {
-                text = "بودجه امروز: ${formatBytes(todayUsed)} از ${formatBytes(dailyBudgetBytes)}"
+                text = LanguageCalendar.text(this@MainActivity, "بودجه امروز: ${formatBytes(todayUsed)} از ${formatBytes(dailyBudgetBytes)}", "Today’s budget: ${formatBytes(todayUsed)} of ${formatBytes(dailyBudgetBytes)}")
                 textSize = 12f
                 setTextColor(ThemeManager.color(this@MainActivity, "text"))
             })
@@ -511,7 +511,7 @@ class MainActivity : AppCompatActivity() {
         speedsLayout.addView(dlBox)
         speedsLayout.addView(ulBox)
         layout.addView(title)
-        layout.addView(TextView(this).apply { text = "برآورد بر اساس ترافیک دستگاه؛ آزمون مستقل سرعت اینترنت نیست"; textSize = 10f; setTextColor(ThemeManager.color(this@MainActivity, "muted")); setPadding(0, 0, 0, 10) })
+        layout.addView(TextView(this).apply { text = LanguageCalendar.text(this@MainActivity, "برآورد بر اساس ترافیک دستگاه؛ آزمون مستقل سرعت اینترنت نیست", "Based on device traffic; this is not an independent speed test."); textSize = 10f; setTextColor(ThemeManager.color(this@MainActivity, "muted")); setPadding(0, 0, 0, 10) })
         layout.addView(speedsLayout)
         card.addView(layout)
         return card
@@ -638,7 +638,7 @@ class MainActivity : AppCompatActivity() {
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             })
             val valueView = TextView(this).apply {
-                text = "در حال محاسبه…"
+                text = LanguageCalendar.text(this@MainActivity, "در حال محاسبه…", "Calculating…")
                 textSize = 10f
                 setTextColor(ThemeManager.color(this@MainActivity, "muted"))
             }
@@ -708,7 +708,7 @@ class MainActivity : AppCompatActivity() {
         val change = if (yesterday > 0) ((today - yesterday).toDouble() / yesterday * 100.0) else 0.0
         val text = if (yesterday == 0L) "برای دیروز داده کافی نیست" else String.format(Locale.US, "%.0f%% %s نسبت به دیروز", kotlin.math.abs(change), if (change >= 0) "بیشتر" else "کمتر")
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
-        layout.addView(TextView(this).apply { this.text = "مقایسه با دیروز"; textSize = 13f; setTextColor(ThemeManager.color(this@MainActivity, "muted")) })
+        layout.addView(TextView(this).apply { this.text = LanguageCalendar.text(this@MainActivity, "مقایسه با دیروز", "Compared with yesterday"); textSize = 13f; setTextColor(ThemeManager.color(this@MainActivity, "muted")) })
         layout.addView(TextView(this).apply { this.text = text; textSize = 16f; typeface = Typeface.DEFAULT_BOLD; setTextColor(ThemeManager.color(this@MainActivity, "text")); setPadding(0, 8, 0, 0) })
         layout.addView(TextView(this).apply { this.text = "امروز: ${formatBytes(today)}   |   دیروز: ${formatBytes(yesterday)}"; textSize = 11f; setTextColor(ThemeManager.color(this@MainActivity, "accent")); setPadding(0, 6, 0, 0) })
         card.addView(layout)
@@ -724,16 +724,16 @@ class MainActivity : AppCompatActivity() {
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
         layout.addView(TextView(this).apply { text = LanguageCalendar.text(this@MainActivity, "⚙️ تنظیمات بسته اینترنت", "⚙️ Data plan settings"); textSize = 15f; typeface = Typeface.DEFAULT_BOLD; setTextColor(ThemeManager.color(this@MainActivity, "text")) })
         val themeButton = Button(this).apply {
-            text = "🎨 تم برنامه: ${ThemeManager.name(ThemeManager.current(this@MainActivity))}"
+            text = LanguageCalendar.text(this@MainActivity, "🎨 تم برنامه: ${ThemeManager.name(ThemeManager.current(this@MainActivity))}", "🎨 App theme: ${ThemeManager.name(ThemeManager.current(this@MainActivity))}")
             setTextColor(Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@MainActivity, "primary"))
             setOnClickListener { showThemePicker() }
         }
         layout.addView(themeButton)
-        val limit = EditText(this).apply { hint = "حجم ماهانه (گیگابایت)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL; setText(monthlyLimitGb.toString()); setTextColor(ThemeManager.color(this@MainActivity, "text")); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
-        val percent = EditText(this).apply { hint = "درصد هشدار (مثلاً 80)"; inputType = android.text.InputType.TYPE_CLASS_NUMBER; setText(warningPercent.toString()); setTextColor(ThemeManager.color(this@MainActivity, "text")); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
+        val limit = EditText(this).apply { hint = LanguageCalendar.text(this@MainActivity, "حجم ماهانه (گیگابایت)", "Monthly allowance (GB)"); inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL; setText(monthlyLimitGb.toString()); setTextColor(ThemeManager.color(this@MainActivity, "text")); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
+        val percent = EditText(this).apply { hint = LanguageCalendar.text(this@MainActivity, "درصد هشدار (مثلاً 80)", "Alert threshold (e.g. 80)"); inputType = android.text.InputType.TYPE_CLASS_NUMBER; setText(warningPercent.toString()); setTextColor(ThemeManager.color(this@MainActivity, "text")); setHintTextColor(ThemeManager.color(this@MainActivity, "muted")) }
         layout.addView(limit); layout.addView(percent)
-        val notify = Switch(this).apply { text = "اعلان نزدیک‌شدن به سقف مصرف"; setTextColor(ThemeManager.color(this@MainActivity, "text")); isChecked = prefs.getBoolean("notifications", true) }
+        val notify = Switch(this).apply { text = LanguageCalendar.text(this@MainActivity, "اعلان نزدیک‌شدن به سقف مصرف", "Notify when nearing the usage limit"); setTextColor(ThemeManager.color(this@MainActivity, "text")); isChecked = prefs.getBoolean("notifications", true) }
         layout.addView(notify)
         val save = Button(this).apply {
             text = LanguageCalendar.text(this@MainActivity, "ذخیره تنظیمات", "Save settings")
