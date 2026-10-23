@@ -24,7 +24,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
             setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "background"))
         }
         root.addView(TextView(this).apply {
-            text="⚙️ امکانات پیشرفته مصرف"; textSize=22f; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setPadding(0,0,0,15)
+            text=LanguageCalendar.text(this, "⚙️ امکانات پیشرفته مصرف", "⚙️ Advanced usage options"); textSize=22f; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setPadding(0,0,0,15)
         })
 
         if (!UsageFeatureUtils.hasUsageAccess(this)) {
@@ -34,7 +34,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
         }
 
         root.addView(Button(this).apply {
-            text = "🎨 انتخاب تم و رنگ کارت‌ها"
+            text = LanguageCalendar.text(this, "🎨 انتخاب تم و رنگ کارت‌ها", "🎨 Choose theme and card colors")
             setTextColor(android.graphics.Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
             setOnClickListener { showThemePicker() }
@@ -58,7 +58,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
         root.addView(monthlyLimit)
         val warning=EditText(this).apply { hint="درصد هشدار سقف بسته (۱ تا ۱۰۰)"; setText(prefs.getInt("warning_percent",80).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
         root.addView(warning)
-        val notifications=Switch(this).apply { text="فعال بودن هشدارهای مصرف"; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); isChecked=prefs.getBoolean("notifications",true) }
+        val notifications=Switch(this).apply { text=LanguageCalendar.text(this, "فعال بودن هشدارهای مصرف", "Enable usage alerts"); setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); isChecked=prefs.getBoolean("notifications",true) }
         root.addView(notifications)
 
         val daily=EditText(this).apply { hint="بودجه روزانه (مگابایت)"; setText(prefs.getInt("daily_budget_mb",500).toString()); inputType=2; setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text")); setHintTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted")) }
@@ -69,7 +69,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
         root.addView(anomaly)
 
         root.addView(Button(this).apply {
-            text="ذخیره تنظیمات"
+            text=LanguageCalendar.text(this, "ذخیره تنظیمات", "Save settings")
             setTextColor(android.graphics.Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
             setOnClickListener {
@@ -93,19 +93,19 @@ class AdvancedUsageActivity : AppCompatActivity() {
         root.addView(card("📡 Hotspot / Tethering", hotspotStatus()))
 
         root.addView(Button(this).apply {
-            text="🔎 جستجو و مرتب‌سازی برنامه‌ها"
+            text=LanguageCalendar.text(this, "🔎 جستجو و مرتب‌سازی برنامه‌ها", "🔎 Search and sort apps")
             setTextColor(android.graphics.Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
             setOnClickListener { startActivity(Intent(this@AdvancedUsageActivity,AppUsageActivity::class.java)) }
         })
         root.addView(Button(this).apply {
-            text="📄 خروجی CSV"
+            text=LanguageCalendar.text(this, "📄 خروجی CSV", "📄 Export CSV")
             setTextColor(android.graphics.Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
             setOnClickListener { startActivity(Intent(this@AdvancedUsageActivity,CsvExportActivity::class.java)) }
         })
         root.addView(Button(this).apply {
-            text="🔔 فعال‌سازی نمایش مصرف در نوار اعلان"
+            text=LanguageCalendar.text(this, "🔔 فعال‌سازی نمایش مصرف در نوار اعلان", "🔔 Show usage in notification")
             setTextColor(android.graphics.Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "upload"))
             setOnClickListener {
@@ -122,7 +122,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
             }
         })
         root.addView(Button(this).apply {
-            text="⏹ خاموش‌کردن نمایش مصرف در نوار اعلان"
+            text=LanguageCalendar.text(this, "⏹ خاموش‌کردن نمایش مصرف در نوار اعلان", "⏹ Hide usage notification")
             setTextColor(android.graphics.Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
             setOnClickListener {
@@ -169,7 +169,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
 
     private fun showCalendarPicker() {
         val solar = LanguageCalendar.isSolar(this)
-        val options = arrayOf("تقویم خورشیدی", "تقویم میلادی")
+        val options = if (LanguageCalendar.isEnglish(this)) arrayOf("Solar Hijri calendar", "Gregorian calendar") else arrayOf("تقویم خورشیدی", "تقویم میلادی")
         android.app.AlertDialog.Builder(this)
             .setTitle(LanguageCalendar.text(this, "انتخاب نوع تقویم", "Choose calendar"))
             .setSingleChoiceItems(options, if (solar) 0 else 1) { dialog, which ->
