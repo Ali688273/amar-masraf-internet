@@ -95,6 +95,11 @@ class AdvancedUsageActivity : AppCompatActivity() {
             setTextColor(android.graphics.Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "upload"))
             setOnClickListener {
+                if (!UsageFeatureUtils.hasUsageAccess(this@AdvancedUsageActivity)) {
+                    Toast.makeText(this@AdvancedUsageActivity, "ابتدا دسترسی آمار مصرف را فعال کنید", Toast.LENGTH_LONG).show()
+                    startActivity(Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                    return@setOnClickListener
+                }
                 prefs.edit().putBoolean("live_usage_enabled", true).apply()
                 if(android.os.Build.VERSION.SDK_INT>=33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)
                     requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),8001)
