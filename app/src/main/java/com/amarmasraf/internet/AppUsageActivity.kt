@@ -96,7 +96,7 @@ class AppUsageActivity : AppCompatActivity() {
         search = EditText(this).apply {
             hint = LanguageCalendar.text(this, "جستجوی نام برنامه یا package", "Search app name or package")
             textSize = 14f
-            singleLine = true
+            isSingleLine = true
             setTextColor(ThemeManager.color(this@AppUsageActivity, "text"))
             setHintTextColor(ThemeManager.color(this@AppUsageActivity, "muted"))
             setPadding(dp(14), dp(10), dp(14), dp(10))
