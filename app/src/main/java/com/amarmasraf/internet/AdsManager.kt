@@ -15,6 +15,7 @@ import ir.tapsell.plus.AdRequestCallback
 import ir.tapsell.plus.AdShowListener
 import ir.tapsell.plus.TapsellPlus
 import ir.tapsell.plus.TapsellPlusBannerType
+import ir.tapsell.plus.TapsellPlusVideoAdHolder
 import ir.tapsell.plus.TapsellPlusInitListener
 import ir.tapsell.plus.model.AdNetworkError
 import ir.tapsell.plus.model.AdNetworks
@@ -97,44 +98,47 @@ object AdsManager {
     }
 
     private fun requestTapsellBanner(activity: Activity, container: FrameLayout) {
+        requestTapsellBannerForZone(activity, container, T_STANDARD_BANNER, tryInstantBanner = true)
+    }
+
+    private fun requestTapsellBannerForZone(
+        activity: Activity,
+        container: FrameLayout,
+        zoneId: String,
+        tryInstantBanner: Boolean
+    ) {
         try {
-            TapsellPlus.requestStandardBannerAd(
-                activity,
-                TAPSELL_STANDARD_BANNER,
-                TapsellPlusBannerType.BANNER_320x50,
+            TapsellPlus.requestStandardBannerAd(activity, zoneId, TapsellPlusBannerType.BANNER_320x50,
                 object : AdRequestCallback() {
                     override fun response(model: TapsellPlusAdModel) {
                         if (activity.isFinishing || activity.isDestroyed) return
                         try {
-                            TapsellPlus.showStandardBannerAd(
-                                activity,
-                                model.responseId,
-                                container,
+                            TapsellPlus.showStandardBannerAd(activity, model.responseId, container,
                                 object : AdShowListener() {
                                     override fun onOpened(model: TapsellPlusAdModel) = Unit
                                     override fun onError(error: TapsellPlusErrorModel) {
-                                        Log.w(TAG, "Tapsell banner show failed: $error")
-                                        showAdiveryBanner(activity, container)
+                                        Log.w(TAG, "Tapsell banner display failed")
+                                        if (tryInstantBanner) requestTapsellBannerForZone(activity, container, T_INSTANT_BANNER, false)
+                                        else showAdiveryBanner(activity, container)
                                     }
-                                }
-                            )
+                                })
                         } catch (e: Exception) {
-                            Log.w(TAG, "Tapsell banner display failed", e)
-                            showAdiveryBanner(activity, container)
+                            Log.w(TAG, "Tapsell banner display threw", e)
+                            if (tryInstantBanner) requestTapsellBannerForZone(activity, container, T_INSTANT_BANNER, false)
+                            else showAdiveryBanner(activity, container)
                         }
                     }
-
                     override fun error(message: String) {
                         Log.w(TAG, "Tapsell banner request failed: $message")
-                        if (!activity.isFinishing && !activity.isDestroyed) {
-                            showAdiveryBanner(activity, container)
-                        }
+                        if (activity.isFinishing || activity.isDestroyed) return
+                        if (tryInstantBanner) requestTapsellBannerForZone(activity, container, T_INSTANT_BANNER, false)
+                        else showAdiveryBanner(activity, container)
                     }
-                }
-            )
+                })
         } catch (e: Exception) {
             Log.w(TAG, "Tapsell banner request threw", e)
-            showAdiveryBanner(activity, container)
+            if (tryInstantBanner) requestTapsellBannerForZone(activity, container, T_INSTANT_BANNER, false)
+            else showAdiveryBanner(activity, container)
         }
     }
 
@@ -164,6 +168,49 @@ object AdsManager {
     }
 
     fun attachNativeAd(activity: Activity, container: FrameLayout) {
+        if (activity.isFinishing || activity.isDestroyed) return
+        val prefs = activity.getSharedPreferences("ad_settings", Context.MODE_PRIVATE)
+        val launchCount = prefs.getInt("native_ad_launch_count", 0) + 1
+        prefs.edit().putInt("native_ad_launch_count", launchCount).apply()
+
+        // Rotate native video in occasionally; keep native banner as the usual, quieter format.
+        if (tapsellReady && launchCount % 3 == 0) {
+            try {
+                TapsellPlus.requestNativeVideo(activity, T_NATIVE_VIDEO, object : AdRequestCallback() {
+                    override fun response(model: TapsellPlusAdModel) {
+                        if (activity.isFinishing || activity.isDestroyed) return
+                        try {
+                            val holder = TapsellPlusVideoAdHolder.Builder()
+                                .setContentViewTemplate(R.layout.native_vid_template)
+                                .setAppInstallationViewTemplate(ir.tapsell.sdk.R.layout.tapsell_app_installation_video_ad_template)
+                                .setAdContainer(container)
+                                .build()
+                            TapsellPlus.showNativeVideo(activity, model.responseId, holder, object : AdShowListener() {
+                                override fun onOpened(model: TapsellPlusAdModel) = Unit
+                                override fun onError(error: TapsellPlusErrorModel) {
+                                    Log.w(TAG, "Tapsell native video failed; using native banner")
+                                    attachTapsellNativeBanner(activity, container)
+                                }
+                            })
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Tapsell native video display threw", e)
+                            attachTapsellNativeBanner(activity, container)
+                        }
+                    }
+                    override fun error(message: String) {
+                        Log.w(TAG, "Tapsell native video request failed: $message")
+                        if (!activity.isFinishing && !activity.isDestroyed) attachTapsellNativeBanner(activity, container)
+                    }
+                })
+                return
+            } catch (e: Exception) {
+                Log.w(TAG, "Tapsell native video request threw", e)
+            }
+        }
+        attachTapsellNativeBanner(activity, container)
+    }
+
+    private fun attachTapsellNativeBanner(activity: Activity, container: FrameLayout) {
         if (activity.isFinishing || activity.isDestroyed) return
         if (tapsellReady) {
             try {
