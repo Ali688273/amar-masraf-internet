@@ -1,11 +1,9 @@
-name: Auto Generate Key and Build Release APK
+name: Build Signed Release APK
 
+# عمدی: بیلد خودکار روی push خاموش است؛ فقط با اجرای دستی شروع می‌شود.
 on:
-  push:
-    branches: [ "main" ]
   workflow_dispatch:
 
-# اعطای مجوز برای ساخت Release و آپلود APK
 permissions:
   contents: write
 
@@ -28,29 +26,34 @@ jobs:
         with:
           gradle-version: '8.5'
 
-      - name: Generate Release Keystore
+      - name: Restore permanent release keystore
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
-          keytool -genkeypair -v \
-            -keystore release.keystore \
-            -alias my-key-alias \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass android \
-            -keypass android \
-            -dname "CN=AmarMasraf, OU=Development, O=AmarMasraf, L=City, ST=State, C=IR"
+          set -euo pipefail
+          test -n "$RELEASE_KEYSTORE_BASE64"
+          test -n "$RELEASE_STORE_PASSWORD"
+          test -n "$RELEASE_KEY_ALIAS"
+          test -n "$RELEASE_KEY_PASSWORD"
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > release.keystore
+          chmod 600 release.keystore
+          keytool -list -keystore release.keystore -storepass "$RELEASE_STORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" >/dev/null
+          echo "Permanent release keystore verified."
 
-      - name: Build Signed Release APK
+      - name: Build signed release APK
+        env:
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           gradle assembleRelease \
-            -Pandroid.injected.signing.store.file=$(pwd)/release.keystore \
-            -Pandroid.injected.signing.store.password=android \
-            -Pandroid.injected.signing.key.alias=my-key-alias \
-            -Pandroid.injected.signing.key.password=android \
-            -Pandroid.injected.signing.store.file=$(pwd)/release.keystore \
-            -Pandroid.injected.signing.store.password=android \
-            -Pandroid.injected.signing.key.alias=my-key-alias \
-            -Pandroid.injected.signing.key.password=android
+            -Pandroid.injected.signing.store.file="$(pwd)/release.keystore" \
+            -Pandroid.injected.signing.store.password="$RELEASE_STORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$RELEASE_KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$RELEASE_KEY_PASSWORD"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
