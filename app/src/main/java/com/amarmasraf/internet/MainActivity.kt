@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         val titleTv = TextView(this).apply {
             text = "آمار مصرف اینترنت"
             textSize = 22f
-            setTextColor(Color.WHITE)
+            setTextColor(ThemeManager.color(this@MainActivity, "text"))
             typeface = Typeface.DEFAULT_BOLD
         }
 
@@ -146,7 +146,9 @@ class MainActivity : AppCompatActivity() {
             setPadding(6, 8, 6, 8)
             setBackgroundColor(ThemeManager.color(this@MainActivity, "dark"))
         }
-        navigation.addView(createNavigationButton("⌂\nخانه", "primary") {})
+        navigation.addView(createNavigationButton("⌂\nخانه", "primary") {
+            scrollContainer.smoothScrollTo(0, 0)
+        })
         navigation.addView(createNavigationButton("▦\nبرنامه‌ها", "cardAlt") {
             startActivity(Intent(this@MainActivity, AppUsageActivity::class.java))
         })
@@ -342,7 +344,7 @@ class MainActivity : AppCompatActivity() {
         val title = TextView(this).apply {
             text = "⚡ سرعت لحظه‌ای شبکه"
             textSize = 14f
-            setTextColor(Color.WHITE)
+            setTextColor(ThemeManager.color(this@MainActivity, "text"))
             typeface = Typeface.DEFAULT_BOLD
             setPadding(0, 0, 0, 15)
         }
@@ -478,10 +480,10 @@ class MainActivity : AppCompatActivity() {
             setPadding(20, 20, 20, 20)
         }
         layout.addView(TextView(this).apply {
-            text = if (period == 1) "گزارش روزانه ۷ روز اخیر" else "گزارش روزانه"
+            text = if (period == 1) "گزارش روزانه ۷ روز اخیر" else "گزارش روزانه ۳۰ روز اخیر"
             textSize = 15f
             typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.WHITE)
+            setTextColor(ThemeManager.color(this@MainActivity, "text"))
             setPadding(0, 0, 0, 12)
         })
         val days = if (period == 1) 7 else 30
@@ -554,7 +556,7 @@ class MainActivity : AppCompatActivity() {
         val text = if (yesterday == 0L) "برای دیروز داده کافی نیست" else String.format(Locale.US, "%.0f%% %s نسبت به دیروز", kotlin.math.abs(change), if (change >= 0) "بیشتر" else "کمتر")
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
         layout.addView(TextView(this).apply { this.text = "مقایسه با دیروز"; textSize = 13f; setTextColor(ThemeManager.color(this@MainActivity, "muted")) })
-        layout.addView(TextView(this).apply { this.text = text; textSize = 16f; typeface = Typeface.DEFAULT_BOLD; setTextColor(Color.WHITE); setPadding(0, 8, 0, 0) })
+        layout.addView(TextView(this).apply { this.text = text; textSize = 16f; typeface = Typeface.DEFAULT_BOLD; setTextColor(ThemeManager.color(this@MainActivity, "text")); setPadding(0, 8, 0, 0) })
         layout.addView(TextView(this).apply { this.text = "امروز: ${formatBytes(today)}   |   دیروز: ${formatBytes(yesterday)}"; textSize = 11f; setTextColor(ThemeManager.color(this@MainActivity, "accent")); setPadding(0, 6, 0, 0) })
         card.addView(layout)
         return card
@@ -567,7 +569,7 @@ class MainActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
         }
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
-        layout.addView(TextView(this).apply { text = "⚙️ تنظیمات بسته اینترنت"; textSize = 15f; typeface = Typeface.DEFAULT_BOLD; setTextColor(Color.WHITE) })
+        layout.addView(TextView(this).apply { text = "⚙️ تنظیمات بسته اینترنت"; textSize = 15f; typeface = Typeface.DEFAULT_BOLD; setTextColor(ThemeManager.color(this@MainActivity, "text")) })
         val themeButton = Button(this).apply {
             text = "🎨 تم برنامه: ${ThemeManager.name(ThemeManager.current(this@MainActivity))}"
             setTextColor(ThemeManager.color(this@MainActivity, "text"))
@@ -669,7 +671,7 @@ class MainActivity : AppCompatActivity() {
         val nameView = TextView(this).apply {
             text = app.name
             textSize = 14f
-            setTextColor(Color.WHITE)
+            setTextColor(ThemeManager.color(this@MainActivity, "text"))
             typeface = Typeface.DEFAULT_BOLD
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                 setMargins(16, 0, 16, 0)
