@@ -8,7 +8,16 @@ import java.util.*
 
 class CsvExportActivity:Activity(){
  private var pending=""
- override fun onCreate(b:Bundle?){super.onCreate(b);export()}
+ private var permissionMissing=false
+ override fun onCreate(b:Bundle?){super.onCreate(b);if(UsageFeatureUtils.hasUsageAccess(this))export()else showPermissionScreen()}
+ override fun onResume(){super.onResume();if(permissionMissing&&UsageFeatureUtils.hasUsageAccess(this)){permissionMissing=false;export()}}
+ private fun showPermissionScreen(){
+  permissionMissing=true
+  val page=android.widget.LinearLayout(this).apply{orientation=android.widget.LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER;setPadding(24,30,24,30)}
+  page.addView(android.widget.TextView(this).apply{text="برای خروجی دقیق CSV، ابتدا دسترسی «آمار مصرف» را فعال کنید.";textSize=16f;gravity=android.view.Gravity.CENTER})
+  page.addView(android.widget.Button(this).apply{text="باز کردن تنظیمات دسترسی";setOnClickListener{startActivity(Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))}})
+  setContentView(page)
+ }
  private fun export(){
   val p=UsageFeatureUtils.billingPeriod(this);val sdf=SimpleDateFormat("yyyy-MM-dd",Locale.US);val sb=StringBuilder("date,mobile_bytes,wifi_bytes,total_bytes\n")
   val c=Calendar.getInstance().apply{timeInMillis=p.start}
