@@ -18,9 +18,16 @@ class UsageAlertReceiver:BroadcastReceiver(){
   val month=UsageFeatureUtils.billingPeriod(c)
   val total=UsageFeatureUtils.totalMobileWifi(c,month)
   val limit=p.getFloat("monthly_limit_gb",10f).toDouble()*1024*1024*1024
-  val warning=p.getInt("warning_percent",80)
+  val warning=p.getInt("warning_percent",80).coerceIn(1,100)
   val percent=if(limit>0)total/limit*100 else 0.0
-  if(percent>=warning)notify(c,nm,7002,"هشدار سقف مصرف","مصرف چرخه قبض "+format(total)+" است؛ "+percent.toInt()+"٪ از سقف تعیین‌شده.")
+  val thresholds=listOf(50,80,90,warning).distinct().sorted()
+  thresholds.forEach { threshold ->
+   val key="alerted_cycle_${month.start}_${threshold}"
+   if(percent>=threshold && !p.getBoolean(key,false)){
+    notify(c,nm,7100+threshold,"هشدار مصرف اینترنت","مصرف چرخه قبض به ${threshold}٪ رسیده است؛ مصرف فعلی ${format(total)} از سقف تعیین‌شده.")
+    p.edit().putBoolean(key,true).apply()
+   }
+  }
   val budget=p.getInt("daily_budget_mb",500).toLong()*1024*1024
   val today=UsageFeatureUtils.totalMobileWifi(c,UsageFeatureUtils.today())
   if(today>=budget)notify(c,nm,7003,"هشدار بودجه روزانه","مصرف امروز "+format(today)+" از بودجه "+format(budget)+" عبور کرده است.")
