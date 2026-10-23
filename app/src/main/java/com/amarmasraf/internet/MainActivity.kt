@@ -158,7 +158,7 @@ class MainActivity : AppCompatActivity() {
         navigation.addView(createNavigationButton("▥\nنمودار", "cardAlt") {
             startActivity(Intent(this@MainActivity, ChartsActivity::class.java))
         })
-        navigation.addView(createNavigationButton("⚙\nتنظیمات", "accent") {
+        navigation.addView(createNavigationButton("⚙\nتنظیمات", "primary") {
             startActivity(Intent(this@MainActivity, AdvancedUsageActivity::class.java))
         })
         rootLayout.addView(navigation)
@@ -664,7 +664,7 @@ class MainActivity : AppCompatActivity() {
         layout.addView(TextView(this).apply { text = "⚙️ تنظیمات بسته اینترنت"; textSize = 15f; typeface = Typeface.DEFAULT_BOLD; setTextColor(ThemeManager.color(this@MainActivity, "text")) })
         val themeButton = Button(this).apply {
             text = "🎨 تم برنامه: ${ThemeManager.name(ThemeManager.current(this@MainActivity))}"
-            setTextColor(ThemeManager.color(this@MainActivity, "text"))
+            setTextColor(Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@MainActivity, "primary"))
             setOnClickListener { showThemePicker() }
         }
@@ -819,7 +819,7 @@ class MainActivity : AppCompatActivity() {
     private fun createChipButton(title: String, isSelected: Boolean, onClick: () -> Unit): CardView {
         return CardView(this).apply {
             radius = 20f
-            setCardBackgroundColor(if (isSelected) ThemeManager.color(this@MainActivity, "upload") else ThemeManager.color(this@MainActivity, "background"))
+            setCardBackgroundColor(if (isSelected) ThemeManager.color(this@MainActivity, "primary") else ThemeManager.color(this@MainActivity, "background"))
             val params = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             params.setMargins(4, 0, 4, 0)
             layoutParams = params
