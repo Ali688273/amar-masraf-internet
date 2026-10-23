@@ -106,8 +106,8 @@ class AdvancedUsageActivity : AppCompatActivity() {
         radius=18f; setCardBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "cardAlt"))
         layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,8,0,4)}
         val l=LinearLayout(context).apply{orientation=LinearLayout.VERTICAL;setPadding(18,15,18,15)}
-        l.addView(TextView(context).apply{text=title;textSize=15f;setTextColor(android.graphics.Color.WHITE);typeface=android.graphics.Typeface.DEFAULT_BOLD})
-        l.addView(TextView(context).apply{text=body;textSize=13f;setTextColor(android.graphics.Color.LTGRAY);setPadding(0,7,0,0)})
+        l.addView(TextView(context).apply{text=title;textSize=15f;setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "text"));typeface=android.graphics.Typeface.DEFAULT_BOLD})
+        l.addView(TextView(context).apply{text=body;textSize=13f;setTextColor(ThemeManager.color(this@AdvancedUsageActivity, "muted"));setPadding(0,7,0,0)})
         addView(l)
     }
 
