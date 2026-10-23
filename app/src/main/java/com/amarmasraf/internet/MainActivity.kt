@@ -70,12 +70,22 @@ class MainActivity : AppCompatActivity() {
     private val speedHandler = Handler(Looper.getMainLooper())
     private var speedRunnable: Runnable? = null
     private var appliedTheme: String? = null
+    private var appliedLanguage: String? = null
+    private var appliedCalendar: String? = null
     private val prefs by lazy { getSharedPreferences("settings", Context.MODE_PRIVATE) }
     private val warningPercent get() = prefs.getInt("warning_percent", 80)
     private val monthlyLimitGb get() = prefs.getFloat("monthly_limit_gb", 10f)
 
     override fun onResume() {
         super.onResume()
+        val selectedLanguage = prefs.getString("language", "system")
+        val selectedCalendar = prefs.getString("calendar", "solar")
+        if (::contentLayout.isInitialized && (appliedLanguage != selectedLanguage || appliedCalendar != selectedCalendar)) {
+            appliedLanguage = selectedLanguage
+            appliedCalendar = selectedCalendar
+            recreate()
+            return
+        }
         if (::contentLayout.isInitialized && appliedTheme != ThemeManager.current(this)) {
             recreate()
             return
@@ -92,6 +102,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         appliedTheme = ThemeManager.current(this)
+        appliedLanguage = prefs.getString("language", "system")
+        appliedCalendar = prefs.getString("calendar", "solar")
 
         val rootLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -120,14 +132,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         val titleTv = TextView(this).apply {
-            text = "آمار مصرف اینترنت"
+            text = LanguageCalendar.text(this@MainActivity, "آمار مصرف اینترنت", "Internet Usage Stats")
             textSize = 22f
             setTextColor(ThemeManager.color(this@MainActivity, "text"))
             typeface = Typeface.DEFAULT_BOLD
         }
 
         val subTitleTv = TextView(this).apply {
-            text = "مدیریت و پایش مصرف داده"
+            text = LanguageCalendar.text(this@MainActivity, "مدیریت و پایش مصرف داده", "Manage and monitor data usage")
             textSize = 13f
             setTextColor(ThemeManager.color(this@MainActivity, "muted"))
             setPadding(0, 4, 0, 0)
@@ -176,16 +188,16 @@ class MainActivity : AppCompatActivity() {
             setPadding(6, 8, 6, 8)
             setBackgroundColor(ThemeManager.color(this@MainActivity, "dark"))
         }
-        navigation.addView(createNavigationButton("⌂\nخانه", "primary") {
+        navigation.addView(createNavigationButton("⌂\n" + LanguageCalendar.text(this, "خانه", "Home"), "primary") {
             scrollContainer.smoothScrollTo(0, 0)
         })
-        navigation.addView(createNavigationButton("▦\nبرنامه‌ها", "cardAlt") {
+        navigation.addView(createNavigationButton("▦\n" + LanguageCalendar.text(this, "برنامه‌ها", "Apps"), "cardAlt") {
             startActivity(Intent(this@MainActivity, AppUsageActivity::class.java))
         })
-        navigation.addView(createNavigationButton("▥\nنمودار", "cardAlt") {
+        navigation.addView(createNavigationButton("▥\n" + LanguageCalendar.text(this, "نمودار", "Charts"), "cardAlt") {
             startActivity(Intent(this@MainActivity, ChartsActivity::class.java))
         })
-        navigation.addView(createNavigationButton("⚙\nتنظیمات", "primary") {
+        navigation.addView(createNavigationButton("⚙\n" + LanguageCalendar.text(this, "تنظیمات", "Settings"), "primary") {
             startActivity(Intent(this@MainActivity, AdvancedUsageActivity::class.java))
         })
         rootLayout.addView(navigation)
@@ -261,11 +273,11 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, 10, 0, 20)
         }
 
-        tabLayout.addView(createTabButton("سیم‌کارت", currentTab == 0) {
+        tabLayout.addView(createTabButton(LanguageCalendar.text(this, "سیم‌کارت", "Mobile"), currentTab == 0) {
             currentTab = 0
             refreshUI()
         })
-        tabLayout.addView(createTabButton("وای‌فای", currentTab == 1) {
+        tabLayout.addView(createTabButton(LanguageCalendar.text(this, "وای‌فای", "Wi-Fi"), currentTab == 1) {
             currentTab = 1
             refreshUI()
         })
@@ -277,15 +289,15 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, 0, 0, 25)
         }
 
-        periodLayout.addView(createChipButton("امروز", currentPeriod == 0) {
+        periodLayout.addView(createChipButton(LanguageCalendar.text(this, "امروز", "Today"), currentPeriod == 0) {
             currentPeriod = 0
             refreshUI()
         })
-        periodLayout.addView(createChipButton("این هفته", currentPeriod == 1) {
+        periodLayout.addView(createChipButton(LanguageCalendar.text(this, "این هفته", "This week"), currentPeriod == 1) {
             currentPeriod = 1
             refreshUI()
         })
-        periodLayout.addView(createChipButton("این ماه", currentPeriod == 2) {
+        periodLayout.addView(createChipButton(LanguageCalendar.text(this, "این ماه", "This month"), currentPeriod == 2) {
             currentPeriod = 2
             refreshUI()
         })
@@ -306,7 +318,7 @@ class MainActivity : AppCompatActivity() {
         if (currentPeriod != 0) contentLayout.addView(createDailyHistoryCard(statsManager, netType, currentPeriod))
 
         val refreshButton = Button(this).apply {
-            text = "↻ بروزرسانی آمار"
+            text = LanguageCalendar.text(this@MainActivity, "↻ بروزرسانی آمار", "↻ Refresh usage")
             setTextColor(Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@MainActivity, "primary"))
             setOnClickListener { refreshUI() }
@@ -434,7 +446,7 @@ class MainActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
             setOnClickListener { startActivity(Intent(this@MainActivity, ChartsActivity::class.java)) }
             addView(TextView(context).apply {
-                text = "📊 نمودار و مقایسه روزانه / ماهانه / سالانه"
+                text = LanguageCalendar.text(this@MainActivity, "📊 نمودار و مقایسه روزانه / ماهانه / سالانه", "📊 Daily / monthly / yearly charts")
                 textSize = 15f
                 typeface = Typeface.DEFAULT_BOLD
                 setTextColor(Color.WHITE)
@@ -459,7 +471,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val title = TextView(this).apply {
-            text = "⚡ سرعت لحظه‌ای شبکه"
+            text = LanguageCalendar.text(this@MainActivity, "⚡ سرعت لحظه‌ای شبکه", "⚡ Live network speed")
             textSize = 14f
             setTextColor(ThemeManager.color(this@MainActivity, "text"))
             typeface = Typeface.DEFAULT_BOLD
@@ -478,7 +490,7 @@ class MainActivity : AppCompatActivity() {
                 setMargins(0, 0, 8, 0)
             }
         }
-        val dlLabel = TextView(this).apply { text = "دانلود"; textSize = 11f; setTextColor(ThemeManager.color(this@MainActivity, "muted")) }
+        val dlLabel = TextView(this).apply { text = LanguageCalendar.text(this@MainActivity, "دانلود", "Download"); textSize = 11f; setTextColor(ThemeManager.color(this@MainActivity, "muted")) }
         downloadSpeedTv = TextView(this).apply { text = "0.0 Mb/s"; textSize = 14f; setTextColor(ThemeManager.color(this@MainActivity, "download")); typeface = Typeface.DEFAULT_BOLD }
         dlBox.addView(dlLabel)
         dlBox.addView(downloadSpeedTv)
@@ -491,7 +503,7 @@ class MainActivity : AppCompatActivity() {
                 setMargins(8, 0, 0, 0)
             }
         }
-        val ulLabel = TextView(this).apply { text = "آپلود"; textSize = 11f; setTextColor(ThemeManager.color(this@MainActivity, "muted")) }
+        val ulLabel = TextView(this).apply { text = LanguageCalendar.text(this@MainActivity, "آپلود", "Upload"); textSize = 11f; setTextColor(ThemeManager.color(this@MainActivity, "muted")) }
         uploadSpeedTv = TextView(this).apply { text = "0.0 Mb/s"; textSize = 14f; setTextColor(ThemeManager.color(this@MainActivity, "upload")); typeface = Typeface.DEFAULT_BOLD }
         ulBox.addView(ulLabel)
         ulBox.addView(uploadSpeedTv)
@@ -521,7 +533,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val title = TextView(this).apply {
-            text = "مجموع مصرف در این دوره"
+            text = LanguageCalendar.text(this@MainActivity, "مجموع مصرف در این دوره", "Total usage for this period")
             textSize = 13f
             setTextColor(ThemeManager.color(this@MainActivity, "muted"))
         }
@@ -710,7 +722,7 @@ class MainActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(0, 0, 0, 20) }
         }
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(20, 18, 20, 18) }
-        layout.addView(TextView(this).apply { text = "⚙️ تنظیمات بسته اینترنت"; textSize = 15f; typeface = Typeface.DEFAULT_BOLD; setTextColor(ThemeManager.color(this@MainActivity, "text")) })
+        layout.addView(TextView(this).apply { text = LanguageCalendar.text(this@MainActivity, "⚙️ تنظیمات بسته اینترنت", "⚙️ Data plan settings"); textSize = 15f; typeface = Typeface.DEFAULT_BOLD; setTextColor(ThemeManager.color(this@MainActivity, "text")) })
         val themeButton = Button(this).apply {
             text = "🎨 تم برنامه: ${ThemeManager.name(ThemeManager.current(this@MainActivity))}"
             setTextColor(Color.WHITE)
@@ -724,7 +736,7 @@ class MainActivity : AppCompatActivity() {
         val notify = Switch(this).apply { text = "اعلان نزدیک‌شدن به سقف مصرف"; setTextColor(ThemeManager.color(this@MainActivity, "text")); isChecked = prefs.getBoolean("notifications", true) }
         layout.addView(notify)
         val save = Button(this).apply {
-            text = "ذخیره تنظیمات"
+            text = LanguageCalendar.text(this@MainActivity, "ذخیره تنظیمات", "Save settings")
             setTextColor(Color.WHITE)
             setBackgroundColor(ThemeManager.color(this@MainActivity, "primary"))
             setOnClickListener {
