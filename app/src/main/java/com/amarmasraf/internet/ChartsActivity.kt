@@ -24,8 +24,9 @@ class ChartsActivity:AppCompatActivity(){
  private var mode=0
  private lateinit var root:LinearLayout
  private var permissionMissing=false
+ private var appliedCalendar: String? = null
  override fun onCreate(b:Bundle?){super.onCreate(b);if(UsageFeatureUtils.hasUsageAccess(this))build()else showPermissionScreen()}
- override fun onResume(){super.onResume();if(permissionMissing&&UsageFeatureUtils.hasUsageAccess(this)){permissionMissing=false;build()}}
+ override fun onResume(){super.onResume();val selected= getSharedPreferences("settings", Context.MODE_PRIVATE).getString("calendar", "solar");if(appliedCalendar!=null&&appliedCalendar!=selected){appliedCalendar=selected;build();return};if(permissionMissing&&UsageFeatureUtils.hasUsageAccess(this)){permissionMissing=false;build()}}
  private fun showPermissionScreen(){
   permissionMissing=true
   root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER;setPadding(24,30,24,30);setBackgroundColor(ThemeManager.color(this@ChartsActivity,"background"))}
@@ -43,6 +44,7 @@ class ChartsActivity:AppCompatActivity(){
  )
  private var loadJob:kotlinx.coroutines.Job?=null
  private fun build(){
+  appliedCalendar = getSharedPreferences("settings", Context.MODE_PRIVATE).getString("calendar", "solar")
   root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(18,25,18,30);setBackgroundColor(ThemeManager.color(this@ChartsActivity, "background"))}
   root.addView(TextView(this).apply{text=LanguageCalendar.text(this, "📊 نمودار و تاریخچه مصرف", "📊 Usage charts and history");textSize=22f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(0,0,0,15)})
   val actions=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
