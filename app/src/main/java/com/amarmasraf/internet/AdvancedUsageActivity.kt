@@ -30,7 +30,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
         root.addView(Button(this).apply {
             text = "🎨 انتخاب تم و رنگ کارت‌ها"
             setTextColor(android.graphics.Color.WHITE)
-            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "accent"))
+            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
             setOnClickListener { showThemePicker() }
         })
 
@@ -75,7 +75,7 @@ class AdvancedUsageActivity : AppCompatActivity() {
         root.addView(Button(this).apply {
             text="🔎 جستجو و مرتب‌سازی برنامه‌ها"
             setTextColor(android.graphics.Color.WHITE)
-            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "accent"))
+            setBackgroundColor(ThemeManager.color(this@AdvancedUsageActivity, "primary"))
             setOnClickListener { startActivity(Intent(this@AdvancedUsageActivity,AppUsageActivity::class.java)) }
         })
         root.addView(Button(this).apply {
