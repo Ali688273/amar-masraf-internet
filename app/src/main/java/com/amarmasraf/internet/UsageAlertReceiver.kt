@@ -16,7 +16,7 @@ class UsageAlertReceiver:BroadcastReceiver(){
   if(!p.getBoolean("notifications",true))return
   val nm=c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
   val month=UsageFeatureUtils.billingPeriod(c)
-  val total=UsageFeatureUtils.totalMobileWifi(c,month)
+  val total=UsageFeatureUtils.queryTotal(c,ConnectivityManager.TYPE_MOBILE,month.start,month.end)
   val limit=p.getFloat("monthly_limit_gb",10f).toDouble()*1024*1024*1024
   val warning=p.getInt("warning_percent",80).coerceIn(1,100)
   val percent=if(limit>0)total/limit*100 else 0.0
@@ -24,7 +24,7 @@ class UsageAlertReceiver:BroadcastReceiver(){
   thresholds.forEach { threshold ->
    val key="alerted_cycle_${month.start}_${threshold}"
    if(percent>=threshold && !p.getBoolean(key,false)){
-    notify(c,nm,7100+threshold,"هشدار مصرف اینترنت","مصرف چرخه قبض به ${threshold}٪ رسیده است؛ مصرف فعلی ${format(total)} از سقف تعیین‌شده.")
+    notify(c,nm,7100+threshold,"هشدار مصرف اینترنت","مصرف سیم‌کارت در چرخه قبض به ${threshold}٪ رسیده است؛ مصرف فعلی ${format(total)} از سقف تعیین‌شده.")
     p.edit().putBoolean(key,true).apply()
    }
   }
