@@ -459,6 +459,7 @@ class MainActivity : AppCompatActivity() {
         speedsLayout.addView(dlBox)
         speedsLayout.addView(ulBox)
         layout.addView(title)
+        layout.addView(TextView(this).apply { text = "برآورد بر اساس ترافیک دستگاه؛ آزمون مستقل سرعت اینترنت نیست"; textSize = 10f; setTextColor(ThemeManager.color(this@MainActivity, "muted")); setPadding(0, 0, 0, 10) })
         layout.addView(speedsLayout)
         card.addView(layout)
         return card
@@ -602,7 +603,9 @@ class MainActivity : AppCompatActivity() {
         cal.set(Calendar.MINUTE, 0)
         cal.set(Calendar.SECOND, 0)
         cal.set(Calendar.MILLISECOND, 0)
-        return Pair(cal.timeInMillis, cal.timeInMillis + 86400000L)
+        val start = cal.timeInMillis
+        cal.add(Calendar.DAY_OF_YEAR, 1)
+        return Pair(start, cal.timeInMillis)
     }
 
     private fun dayOfMonthRange(dayOfMonth: Int): Pair<Long, Long> {
@@ -729,10 +732,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun scheduleDailyCheck() {
-        if (!prefs.getBoolean("notifications", true)) return
         val alarm = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, UsageAlertReceiver::class.java)
         val pending = PendingIntent.getBroadcast(this, 7001, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        if (!prefs.getBoolean("notifications", true)) {
+            alarm.cancel(pending)
+            return
+        }
         val cal = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 21); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0); if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DAY_OF_YEAR, 1) }
         alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP, cal.timeInMillis, AlarmManager.INTERVAL_DAY, pending)
     }
