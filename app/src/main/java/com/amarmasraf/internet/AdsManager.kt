@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 object AdsManager {
     private const val TAG = "AmarMasrafAds"
 
-    private const val TAPSELL_KEY = "aanbcpksderreqsnknjnookaelpsgibjbrjbcfsicndoqmkimibmncsnfqrrbkccaiqnjb"
     private const val TAPSELL_NATIVE_BANNER = "6a868ecdaf056d371d5ba541"
     private const val TAPSELL_REWARDED = "6adb201bbe0ef33af833007d"
     private const val TAPSELL_INTERSTITIAL = "6adb20409252922579632a98"
@@ -37,7 +36,6 @@ object AdsManager {
     private const val TAPSELL_STANDARD_BANNER = "6adb20c3fc418616211cb77c"
     private const val TAPSELL_INSTANT_BANNER = "6adb20eafc418616211cb77d"
 
-    private const val ADIVERY_APP_KEY = "c92f0ab7-8f64-4007-a345-58129edfa87b"
     private const val ADIVERY_INTERSTITIAL = "278a1ffe-0547-4e8f-9dea-0f15bc015b89"
     private const val ADIVERY_REWARDED = "1df93e2b-e555-4800-bf2f-ba8347f4f081"
     private const val ADIVERY_BANNER = "0d1e991c-c67a-40ee-8ffa-ea1bddbdf425"
@@ -59,7 +57,7 @@ object AdsManager {
 
         try {
             Adivery.setLoggingEnabled(false)
-            Adivery.configure(app, ADIVERY_APP_KEY)
+            Adivery.configure(app, BuildConfig.ADIVERY_APP_KEY)
             Adivery.prepareInterstitialAd(app, ADIVERY_INTERSTITIAL)
             Adivery.prepareRewardedAd(app, ADIVERY_REWARDED)
             Adivery.prepareAppOpenAd(app, ADIVERY_APP_OPEN)
@@ -68,7 +66,7 @@ object AdsManager {
         }
 
         try {
-            TapsellPlus.initialize(app, TAPSELL_KEY, object : TapsellPlusInitListener() {
+            TapsellPlus.initialize(app, BuildConfig.TAPSELL_APP_KEY, object : TapsellPlusInitListener() {
                 override fun onInitializeSuccess(adNetworks: AdNetworks) {
                     tapsellReady = true
                     Log.d(TAG, "Tapsell initialized: ${adNetworks.name}")
