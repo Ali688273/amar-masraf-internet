@@ -29,7 +29,7 @@ class ChartsActivity:AppCompatActivity(){
   val tabs=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
   listOf("روزانه","ماهانه","سالانه").forEachIndexed{i,t->tabs.addView(tab(t,i==mode){mode=i;build()})}
   root.addView(tabs)
-  root.addView(TextView(this).apply{text=when(mode){0->"۹۰ روز اخیر";1->"۲۴ ماه اخیر";else->"۱۰ سال اخیر"};textSize=15f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE);setPadding(0,20,0,10)})
+  root.addView(TextView(this).apply{text=when(mode){0->"۹۰ روز اخیر";1->"۲۴ ماه اخیر";else->"۱۰ سال اخیر"};textSize=15f;typeface=Typeface.DEFAULT_BOLD;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(0,20,0,10)})
   val manager=getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
   if(mode==0)root.addView(createHourly(manager))
   root.addView(createChart(manager,ConnectivityManager.TYPE_MOBILE,"سیم‌کارت","#38BDF8"))
@@ -50,9 +50,9 @@ class ChartsActivity:AppCompatActivity(){
   val max=values.maxOrNull()?.coerceAtLeast(1L)?:1L
   values.forEachIndexed{h,v->
    val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL}
-   row.addView(TextView(this).apply{text=String.format(Locale.US,"%02d:00",h);setTextColor(Color.LTGRAY);textSize=9f;layoutParams=LinearLayout.LayoutParams(48,-2)})
+   row.addView(TextView(this).apply{text=String.format(Locale.US,"%02d:00",h);setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));textSize=9f;layoutParams=LinearLayout.LayoutParams(48,-2)})
    row.addView(TextView(this).apply{text=" ".repeat((v.toDouble()/max*24).toInt().coerceAtLeast(if(v>0)1 else 0));setTextColor(Color.TRANSPARENT);setBackgroundColor(ThemeManager.color(this@ChartsActivity, "accent"));layoutParams=LinearLayout.LayoutParams(0,15,1f).apply{setMargins(4,3,4,3)}})
-   row.addView(TextView(this).apply{text=format(v);setTextColor(Color.LTGRAY);textSize=8f})
+   row.addView(TextView(this).apply{text=format(v);setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));textSize=8f})
    box.addView(row)
   }
   card.addView(box);return card
@@ -68,7 +68,7 @@ class ChartsActivity:AppCompatActivity(){
    val offset=when(mode){0->i-89;1->i-23;else->i-9}
    row.addView(TextView(this).apply{text=when(mode){0->if(offset==0)"امروز" else (-offset).toString()+" روز پیش";1->SimpleDateFormat("MM/yyyy",Locale.US).format(monthDate(offset));else->SimpleDateFormat("yyyy",Locale.US).format(yearDate(offset))};textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"));layoutParams=LinearLayout.LayoutParams(62,-2)})
    row.addView(TextView(this).apply{text=" ".repeat((data[i].toDouble()/max*22).toInt().coerceAtLeast(if(data[i]>0)1 else 0));setTextColor(Color.TRANSPARENT);setBackgroundColor(ThemeManager.color(this@ChartsActivity, if (title == "سیم‌کارت") "download" else "upload"));layoutParams=LinearLayout.LayoutParams(0,14,1f).apply{setMargins(4,0,4,0)}})
-   row.addView(TextView(this).apply{text=format(data[i]);textSize=8f;setTextColor(Color.LTGRAY)})
+   row.addView(TextView(this).apply{text=format(data[i]);textSize=8f;setTextColor(ThemeManager.color(this@ChartsActivity, "muted"))})
    box.addView(row)
   }
   card.addView(box);return card
@@ -77,7 +77,7 @@ class ChartsActivity:AppCompatActivity(){
   radius=20f;setCardBackgroundColor(ThemeManager.color(this@ChartsActivity, "cardAlt"));layoutParams=LinearLayout.LayoutParams(-1,-2)
   val p=when(mode){0->dayRange(0);1->monthRange(0);else->yearRange(0)}
   val a=query(m,ConnectivityManager.TYPE_MOBILE,p.first,p.second);val w=query(m,ConnectivityManager.TYPE_WIFI,p.first,p.second)
-  addView(TextView(context).apply{text="مقایسه بازه فعلی\nسیم‌کارت: "+format(a)+"\nWi‑Fi: "+format(w)+"\nمجموع: "+format(a+w);textSize=14f;setTextColor(Color.WHITE);setPadding(18,18,18,18)})
+  addView(TextView(context).apply{text="مقایسه بازه فعلی\nسیم‌کارت: "+format(a)+"\nWi‑Fi: "+format(w)+"\nمجموع: "+format(a+w);textSize=14f;setTextColor(ThemeManager.color(this@ChartsActivity, "text"));setPadding(18,18,18,18)})
  }
  private fun query(m:NetworkStatsManager,t:Int,s:Long,e:Long):Long=try{val x=m.querySummary(t,null,s,e);val b=NetworkStats.Bucket();var z=0L;while(x.hasNextBucket()){x.getNextBucket(b);z+=b.rxBytes+b.txBytes};x.close();z}catch(_:Exception){0L}
  private fun dayRange(o:Int):Pair<Long,Long>{val c=Calendar.getInstance();c.add(Calendar.DAY_OF_YEAR,o);c.set(Calendar.HOUR_OF_DAY,0);c.set(Calendar.MINUTE,0);c.set(Calendar.SECOND,0);c.set(Calendar.MILLISECOND,0);return Pair(c.timeInMillis,c.timeInMillis+86400000L)}
