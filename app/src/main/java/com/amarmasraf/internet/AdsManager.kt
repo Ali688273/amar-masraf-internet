@@ -66,7 +66,7 @@ object AdsManager {
         }
 
         try {
-            TapsellPlus.initialize(app, BuildConfig.TAPSELL_APP_KEY, object : TapsellPlusInitListener() {
+            TapsellPlus.initialize(app, BuildConfig.TAPSELL_APP_KEY, object : TapsellPlusInitListener {
                 override fun onInitializeSuccess(adNetworks: AdNetworks) {
                     tapsellReady = true
                     Log.d(TAG, "Tapsell initialized: ${adNetworks.name}")
@@ -321,9 +321,9 @@ object AdsManager {
     fun onMainResume(activity: Activity) {
         if (!adiveryPreloaded && BuildConfig.ADIVERY_APP_KEY.isNotBlank()) {
             try {
-                Adivery.prepareInterstitialAd(activity, A_INTERSTITIAL)
-                Adivery.prepareRewardedAd(activity, A_REWARDED)
-                Adivery.prepareAppOpenAd(activity, A_APP_OPEN)
+                Adivery.prepareInterstitialAd(activity, ADIVERY_INTERSTITIAL)
+                Adivery.prepareRewardedAd(activity, ADIVERY_REWARDED)
+                Adivery.prepareAppOpenAd(activity, ADIVERY_APP_OPEN)
                 adiveryPreloaded = true
             } catch (e: Exception) {
                 Log.w(TAG, "Adivery ad preload failed", e)
