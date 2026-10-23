@@ -15,6 +15,11 @@ android {
         versionName "1.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        def tapsellAppKey = (project.findProperty("TAPSELL_APP_KEY") ?: System.getenv("TAPSELL_APP_KEY") ?: "").toString().replace("\\", "\\\\").replace("\"", "\\\"")
+        def adiveryAppKey = (project.findProperty("ADIVERY_APP_KEY") ?: System.getenv("ADIVERY_APP_KEY") ?: "").toString().replace("\\", "\\\\").replace("\"", "\\\"")
+        buildConfigField "String", "TAPSELL_APP_KEY", "\"${tapsellAppKey}\""
+        buildConfigField "String", "ADIVERY_APP_KEY", "\"${adiveryAppKey}\""
     }
 
     buildTypes {
@@ -35,6 +40,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 
@@ -49,5 +55,6 @@ dependencies {
     implementation 'com.google.android.gms:play-services-ads-identifier:18.0.1'
 
     // کتابخانه تپسل پلاس
-    implementation 'ir.tapsell.plus:tapsell-plus-sdk-android:2.2.0'
+    implementation 'ir.tapsell.plus:tapsell-plus-sdk-android:2.3.3'
+    implementation 'com.adivery:sdk:4.10.0-alpha.1'
 }
